@@ -1,0 +1,223 @@
+/* Mobile Responsive Styles */
+
+/* Mobile-first approach */
+@media (max-width: 768px) {
+  /* Dashboard Mobile */
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    z-index: 1050;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+  }
+  
+  .sidebar.show {
+    left: 0;
+  }
+  
+  .main-content {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+  
+  .dashboard-content {
+    padding: 1rem !important;
+    margin: 0.5rem !important;
+  }
+  
+  .header {
+    padding: 1rem !important;
+  }
+  
+  .header-title {
+    font-size: 1.1rem !important;
+  }
+  
+  /* Stats cards mobile layout */
+  .stats-card {
+    margin-bottom: 1rem;
+  }
+  
+  .stats-card h2 {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Quick actions mobile */
+  .quick-actions .btn {
+    width: 100% !important;
+    margin-bottom: 0.5rem;
+    margin-right: 0 !important;
+  }
+  
+  /* Feature cards mobile */
+  .feature-card {
+    margin-bottom: 1rem;
+  }
+  
+  .step-card {
+    margin-bottom: 1rem;
+  }
+  
+  .setup-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Overview card mobile */
+  .overview-card {
+    padding: 1.5rem !important;
+  }
+  
+  .overview-card h2 {
+    font-size: 1.5rem !important;
+  }
+  
+  .overview-card p {
+    font-size: 1rem !important;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 576px) {
+  .dashboard-content {
+    padding: 0.75rem !important;
+    margin: 0.25rem !important;
+  }
+  
+  .overview-card {
+    padding: 1rem !important;
+  }
+  
+  .overview-card h2 {
+    font-size: 1.25rem !important;
+  }
+  
+  .feature-card {
+    padding: 0.75rem !important;
+  }
+  
+  .step-card {
+    padding: 1rem !important;
+  }
+  
+  .setup-card {
+    padding: 1rem !important;
+  }
+  
+  .stats-card .card-body {
+    padding: 1rem !important;
+  }
+  
+  .quick-actions {
+    padding: 1rem !important;
+  }
+}
+
+/* Modal mobile styles */
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+  
+  .modal-body {
+    padding: 1rem !important;
+  }
+  
+  .welcome-modal .modal-body,
+  .setup-wizard-modal .modal-body {
+    padding: 1.5rem !important;
+  }
+  
+  .feature-gradient {
+    padding: 1rem !important;
+  }
+  
+  .welcome-icon {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+}
+
+/* Eye-catching animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Apply animations */
+.stats-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.stats-card:nth-child(1) { animation-delay: 0.1s; }
+.stats-card:nth-child(2) { animation-delay: 0.2s; }
+.stats-card:nth-child(3) { animation-delay: 0.3s; }
+.stats-card:nth-child(4) { animation-delay: 0.4s; }
+
+.feature-card {
+  animation: fadeInScale 0.5s ease-out;
+}
+
+.step-card {
+  animation: bounceIn 0.7s ease-out;
+}
+
+.setup-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+/* Gradient backgrounds for mobile */
+@media (max-width: 768px) {
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+  }
+  
+  .dashboard-content {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  
+  .sidebar {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+}
