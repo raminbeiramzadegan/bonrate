@@ -3,9 +3,11 @@ import { Row, Col, Card, Button, Modal, ProgressBar } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import SetupWizard from '../components/SetupWizard';
 import Layout from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
 
@@ -44,6 +46,7 @@ const Dashboard = () => {
         <span className="d-none d-sm-inline">Create Campaign</span>
         <i className="fa-solid fa-plus d-sm-none"></i>
       </Button>
+     
     </>
   );
 

@@ -38,10 +38,46 @@ const Register = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
+    
+    // Clear specific field error when user starts typing correct data
+    if (errors[name]) {
+      const newErrors = { ...errors };
+      
+      // Validate the specific field in real-time
+      if (name === 'firstName' && newValue.trim()) {
+        delete newErrors.firstName;
+      } else if (name === 'lastName' && newValue.trim()) {
+        delete newErrors.lastName;
+      } else if (name === 'businessName' && newValue.trim()) {
+        delete newErrors.businessName;
+      } else if (name === 'email' && /\S+@\S+\.\S+/.test(newValue)) {
+        delete newErrors.email;
+      } else if (name === 'phone' && newValue.trim()) {
+        delete newErrors.phone;
+      } else if (name === 'password') {
+        if (newValue.length >= 8 && 
+            /(?=.*[a-z])/.test(newValue) && 
+            /(?=.*[A-Z])/.test(newValue) && 
+            /(?=.*\d)/.test(newValue) && 
+            /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(newValue) &&
+            (!formData.firstName || !newValue.toLowerCase().includes(formData.firstName.toLowerCase())) &&
+            (!formData.lastName || !newValue.toLowerCase().includes(formData.lastName.toLowerCase()))) {
+          delete newErrors.password;
+        }
+      } else if (name === 'confirmPassword' && newValue === formData.password) {
+        delete newErrors.confirmPassword;
+      } else if (name === 'agreeToTerms' && checked) {
+        delete newErrors.agreeToTerms;
+      }
+      
+      setErrors(newErrors);
+    }
   };
 
   const validateForm = () => {
@@ -75,6 +111,11 @@ const Register = () => {
       newErrors.password = 'Password cannot contain your first name';
     } else if (formData.lastName && formData.password.toLowerCase().includes(formData.lastName.toLowerCase())) {
       newErrors.password = 'Password cannot contain your last name';
+    }
+    
+    // Also check confirm password when password changes
+    if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     if (!formData.confirmPassword) {

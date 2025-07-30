@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     navigate('/login');
@@ -44,15 +45,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = () => {
       const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
       
       if (!storedToken || isTokenExpired(storedToken)) {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         setToken(null);
         setUser(null);
       } else {
         setToken(storedToken);
-        setUser({ email: 'user@example.com' });
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
       }
       setLoading(false);
     };
@@ -95,6 +100,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = (tokenData, userData) => {
     localStorage.setItem('token', tokenData.access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
     if (tokenData.refresh_token) {
       localStorage.setItem('refreshToken', tokenData.refresh_token);
     }

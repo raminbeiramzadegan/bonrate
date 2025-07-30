@@ -15,10 +15,25 @@ const Login = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
+    
+    // Clear specific field error when user starts typing correct data
+    if (errors[name]) {
+      const newErrors = { ...errors };
+      
+      if (name === 'email' && /\S+@\S+\.\S+/.test(newValue)) {
+        delete newErrors.email;
+      } else if (name === 'password' && newValue.length >= 6) {
+        delete newErrors.password;
+      }
+      
+      setErrors(newErrors);
+    }
   };
 
   const validateForm = () => {

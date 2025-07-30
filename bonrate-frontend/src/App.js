@@ -6,6 +6,7 @@ import './App.css';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import AuthRedirect from './components/AuthRedirect';
 
 // Context
 import { AuthProvider } from './contexts/AuthContext';
@@ -54,8 +55,8 @@ function App() {
           <Route path="/template-editor" element={<ProtectedRoute><TemplateEditor /></ProtectedRoute>} />
           <Route path="/campaign-wizard" element={<ProtectedRoute><CampaignWizard /></ProtectedRoute>} />
           <Route path="/drip-automation" element={<ProtectedRoute><DripAutomation /></ProtectedRoute>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<AuthRedirect><Login /></AuthRedirect>} />
+          <Route path="/register" element={<AuthRedirect><Register /></AuthRedirect>} />
           <Route path="/*" element={
             <div className="App d-flex flex-column min-vh-100">
               <Navigation />

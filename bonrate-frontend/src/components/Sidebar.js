@@ -1,10 +1,12 @@
 import React from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout, user } = useAuth();
 
   const isActive = (path) => location.pathname === path;
 
@@ -153,11 +155,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         <div className="user-profile">
           <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="User" className="user-avatar" />
           <div className="user-info">
-            <p className="user-name mb-0">John Smith</p>
-            <p className="user-email mb-0">john@example.com</p>
+            <p className="user-name mb-0">{user?.name || 'User'}</p>
+            <p className="user-email mb-0">{user?.email}</p>
           </div>
-          <Button variant="link" className="text-muted p-0">
-            <i className="fa-solid fa-ellipsis-vertical"></i>
+          <Button variant="link" className="text-danger p-0" onClick={logout} title="Logout">
+            <i className="fa-solid fa-sign-out-alt"></i>
           </Button>
         </div>
       </div>
@@ -166,3 +168,4 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 };
 
 export default Sidebar;
+   
