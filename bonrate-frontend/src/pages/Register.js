@@ -143,42 +143,44 @@ const Register = () => {
     setErrors({});
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('http://127.0.0.1:8000/api/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          confirm_password: formData.confirmPassword,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          business_name: formData.businessName,
+          phone: formData.phone
+        })
+      });
       
-      // Check if email already exists
-      const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      if (existingUsers.find(u => u.email === formData.email)) {
-        throw new Error('Email already registered');
+      const data = await response.json();
+      
+      if (response.ok) {
+        const tokenData = {
+          access_token: data.tokens.access,
+          refresh_token: data.tokens.refresh
+        };
+        const userData = {
+          email: data.user.email,
+          name: `${data.user.first_name} ${data.user.last_name}`,
+          businessName: data.user.business_name
+        };
+        
+        login(tokenData, userData);
+      } else {
+        throw new Error(data.error || 'Registration failed');
       }
-      
-      // Add new user to mock database
-      const newUser = {
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        businessName: formData.businessName,
-        phone: formData.phone
-      };
-      existingUsers.push(newUser);
-      localStorage.setItem('registeredUsers', JSON.stringify(existingUsers));
-      
-      const mockTokenData = {
-        access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTl9.Lkylp_o9E_azoiKlbE_j8ssJLjNnTVxyQRgE_-ZYY1c',
-        refresh_token: 'mock-refresh-token'
-      };
-      const mockUserData = {
-        email: formData.email,
-        name: `${formData.firstName} ${formData.lastName}`,
-        businessName: formData.businessName
-      };
-      
-      login(mockTokenData, mockUserData);
     } catch (error) {
-      if (error.message === 'Email already registered') {
+      if (error.message.includes('email')) {
         setErrors({ email: 'This email is already registered' });
       } else {
-        setErrors({ general: 'Registration failed. Please try again.' });
+        setErrors({ general: error.message || 'Registration failed. Please try again.' });
       }
     } finally {
       setIsLoading(false);

@@ -66,37 +66,34 @@ const Login = () => {
     setErrors({});
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('http://127.0.0.1:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
       
-      // Mock user database - predefined test accounts
-      const defaultUsers = [
-        { email: 'admin@bonrate.com', password: 'admin123', name: 'Admin User' },
-        { email: 'demo@bonrate.com', password: 'demo123', name: 'Demo User' },
-        { email: 'test@bonrate.com', password: 'test123', name: 'Test User' }
-      ];
+      const data = await response.json();
       
-      // Get registered users from localStorage
-      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-        .map(u => ({ email: u.email, password: u.password, name: `${u.firstName} ${u.lastName}` }));
-      
-      const allUsers = [...defaultUsers, ...registeredUsers];
-      const user = allUsers.find(u => u.email === formData.email && u.password === formData.password);
-      
-      if (!user) {
-        throw new Error('Invalid credentials');
+      if (response.ok) {
+        const tokenData = {
+          access_token: data.tokens.access,
+          refresh_token: data.tokens.refresh
+        };
+        const userData = {
+          email: data.user.email,
+          name: `${data.user.first_name} ${data.user.last_name}`,
+          businessName: data.user.business_name
+        };
+        
+        login(tokenData, userData);
+      } else {
+        throw new Error(data.error || 'Login failed');
       }
-      
-      const mockTokenData = {
-        access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTl9.Lkylp_o9E_azoiKlbE_j8ssJLjNnTVxyQRgE_-ZYY1c',
-        refresh_token: 'mock-refresh-token'
-      };
-      const mockUserData = {
-        email: user.email,
-        name: user.name
-      };
-      
-      login(mockTokenData, mockUserData);
     } catch (error) {
       setErrors({ general: 'Invalid email or password' });
     } finally {
