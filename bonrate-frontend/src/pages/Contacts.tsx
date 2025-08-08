@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Modal, Form, Badge, Table, Alert, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import Layout from '../components/Layout';
-import { contactsApi } from './api/contacts';
+
 import '../styles/Campaign.css';
 
 interface Contact {
