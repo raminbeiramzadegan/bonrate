@@ -1,14 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/Register.css';
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+}
 
-const Register = () => {
+interface Errors {
+  firstName?: string;
+  lastName?: string;
+  businessName?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  confirmPassword?: string;
+  agreeToTerms?: string;
+  general?: string;
+}
+
+interface RegisterResponse {
+  tokens: {
+    access: string;
+    refresh: string;
+  };
+  user: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    business_name: string;
+  };
+  error?: string;
+}
+
+interface GoogleCredential {
+  email?: string;
+  given_name?: string;
+  family_name?: string;
+}
+
+const Register: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     businessName: '',
@@ -18,11 +61,11 @@ const Register = () => {
     confirmPassword: '',
     agreeToTerms: false
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [animatedElements, setAnimatedElements] = useState([]);
-  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [animatedElements, setAnimatedElements] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Errors>({});
   const { login } = useAuth();
 
   useEffect(() => {
@@ -36,7 +79,7 @@ const Register = () => {
     return () => timeouts.forEach(clearTimeout);
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
@@ -46,28 +89,29 @@ const Register = () => {
     }));
     
     // Clear specific field error when user starts typing correct data
-    if (errors[name]) {
+    if (errors[name as keyof Errors]) {
       const newErrors = { ...errors };
       
       // Validate the specific field in real-time
-      if (name === 'firstName' && newValue.trim()) {
+      if (name === 'firstName' && (newValue as string).trim()) {
         delete newErrors.firstName;
-      } else if (name === 'lastName' && newValue.trim()) {
+      } else if (name === 'lastName' && (newValue as string).trim()) {
         delete newErrors.lastName;
-      } else if (name === 'businessName' && newValue.trim()) {
+      } else if (name === 'businessName' && (newValue as string).trim()) {
         delete newErrors.businessName;
-      } else if (name === 'email' && /\S+@\S+\.\S+/.test(newValue)) {
+      } else if (name === 'email' && /\S+@\S+\.\S+/.test(newValue as string)) {
         delete newErrors.email;
-      } else if (name === 'phone' && newValue.trim()) {
+      } else if (name === 'phone' && (newValue as string).trim()) {
         delete newErrors.phone;
       } else if (name === 'password') {
-        if (newValue.length >= 8 && 
-            /(?=.*[a-z])/.test(newValue) && 
-            /(?=.*[A-Z])/.test(newValue) && 
-            /(?=.*\d)/.test(newValue) && 
-            /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(newValue) &&
-            (!formData.firstName || !newValue.toLowerCase().includes(formData.firstName.toLowerCase())) &&
-            (!formData.lastName || !newValue.toLowerCase().includes(formData.lastName.toLowerCase()))) {
+        const passwordValue = newValue as string;
+        if (passwordValue.length >= 8 && 
+            /(?=.*[a-z])/.test(passwordValue) && 
+            /(?=.*[A-Z])/.test(passwordValue) && 
+            /(?=.*\d)/.test(passwordValue) && 
+            /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(passwordValue) &&
+            (!formData.firstName || !passwordValue.toLowerCase().includes(formData.firstName.toLowerCase())) &&
+            (!formData.lastName || !passwordValue.toLowerCase().includes(formData.lastName.toLowerCase()))) {
           delete newErrors.password;
         }
       } else if (name === 'confirmPassword' && newValue === formData.password) {
@@ -80,8 +124,8 @@ const Register = () => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
     
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
@@ -132,7 +176,7 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -159,7 +203,7 @@ const Register = () => {
         })
       });
       
-      const data = await response.json();
+      const data: RegisterResponse = await response.json();
       
       if (response.ok) {
         const tokenData = {
@@ -177,18 +221,19 @@ const Register = () => {
         throw new Error(data.error || 'Registration failed');
       }
     } catch (error) {
-      if (error.message.includes('email')) {
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('email')) {
         setErrors({ email: 'This email is already registered' });
       } else {
-        setErrors({ general: error.message || 'Registration failed. Please try again.' });
+        setErrors({ general: errorMessage || 'Registration failed. Please try again.' });
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSuccess = (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
+  const handleGoogleSuccess = (credentialResponse: any) => {
+    const decoded = jwtDecode<GoogleCredential>(credentialResponse.credential);
     setFormData(prev => ({
       ...prev,
       email: decoded.email || '',
@@ -196,7 +241,6 @@ const Register = () => {
       lastName: decoded.family_name || ''
     }));
   };
-
 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', background: '#F9FAFB', color: '#111827', minHeight: '100vh' }}>
@@ -208,28 +252,25 @@ const Register = () => {
         <div className="position-absolute top-0 start-0 w-100 h-100" style={{ background: 'rgba(0,0,0,0.1)' }}></div>
         
         {/* Floating Review Stars */}
-        <div className="position-absolute" style={{ 
+        <div className="position-absolute float-star" style={{ 
           top: '10%', 
           right: '10%', 
-          animation: 'floatStar 4s ease-in-out infinite',
           opacity: 0.7
         }}>
           <i className="fas fa-star text-warning" style={{ fontSize: '20px' }}></i>
         </div>
-        <div className="position-absolute" style={{ 
+        <div className="position-absolute float-star-delayed" style={{ 
           top: '20%', 
           right: '25%', 
-          animation: 'floatStar 5s ease-in-out infinite 1s',
           opacity: 0.6
         }}>
           <i className="fas fa-star text-warning" style={{ fontSize: '16px' }}></i>
         </div>
         
         {/* Growth Arrow */}
-        <div className="position-absolute" style={{ 
+        <div className="position-absolute growth-pulse" style={{ 
           bottom: '15%', 
           right: '20%', 
-          animation: 'growthPulse 3s ease-in-out infinite',
           opacity: 0.4
         }}>
           <i className="fas fa-arrow-trend-up text-white" style={{ fontSize: '24px' }}></i>
@@ -241,10 +282,9 @@ const Register = () => {
             transition: 'all 0.8s ease-out'
           }}>
             <div className="d-flex align-items-center mb-4">
-              <div className="bg-white rounded p-3 me-4 d-flex align-items-center justify-content-center text-primary" style={{ 
+              <div className={`bg-white rounded p-3 me-4 d-flex align-items-center justify-content-center text-primary ${animatedElements.includes('header') ? 'icon-pulse' : ''}`} style={{ 
                 width: '48px', 
-                height: '48px',
-                animation: animatedElements.includes('header') ? 'iconPulse 2s ease-in-out infinite' : 'none'
+                height: '48px'
               }}>
                 <i className="fas fa-star-half-stroke fs-4"></i>
               </div>
@@ -291,33 +331,35 @@ const Register = () => {
           }}>
             <div className="d-flex align-items-center gap-3">
               <div className="d-flex">
-                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" className="rounded-circle border border-white border-2" style={{ 
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" className={`rounded-circle border border-white border-2 ${animatedElements.includes('testimonial') ? 'avatar-bounce' : ''}`} style={{ 
                   width: '32px', 
                   height: '32px', 
-                  marginLeft: '-8px',
-                  animation: animatedElements.includes('testimonial') ? 'avatarBounce 2s ease-in-out infinite' : 'none'
+                  marginLeft: '-8px'
                 }} alt="User" />
-                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" className="rounded-circle border border-white border-2" style={{ 
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" className={`rounded-circle border border-white border-2 ${animatedElements.includes('testimonial') ? 'avatar-bounce-delayed-1' : ''}`} style={{ 
                   width: '32px', 
                   height: '32px', 
-                  marginLeft: '-8px',
-                  animation: animatedElements.includes('testimonial') ? 'avatarBounce 2s ease-in-out infinite 0.3s' : 'none'
+                  marginLeft: '-8px'
                 }} alt="User" />
-                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" className="rounded-circle border border-white border-2" style={{ 
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" className={`rounded-circle border border-white border-2 ${animatedElements.includes('testimonial') ? 'avatar-bounce-delayed-2' : ''}`} style={{ 
                   width: '32px', 
                   height: '32px', 
-                  marginLeft: '-8px',
-                  animation: animatedElements.includes('testimonial') ? 'avatarBounce 2s ease-in-out infinite 0.6s' : 'none'
+                  marginLeft: '-8px'
                 }} alt="User" />
               </div>
               <div>
                 <div className="fw-medium small">Join 2,500+ businesses</div>
                 <div className="d-flex align-items-center">
                   <div className="d-flex text-warning me-2">
-                    {[...Array(5)].map((_, i) => <i key={i} className="fas fa-star" style={{ 
-                      fontSize: '10px',
-                      animation: animatedElements.includes('testimonial') ? `starTwinkle 1.5s ease-in-out infinite ${i * 0.2}s` : 'none'
-                    }}></i>)}
+                    {[...Array(5)].map((_, i) => {
+                      const delayClass = i === 0 ? 'star-twinkle' : 
+                                       i === 1 ? 'star-twinkle-delayed-1' :
+                                       i === 2 ? 'star-twinkle-delayed-2' :
+                                       i === 3 ? 'star-twinkle-delayed-3' : 'star-twinkle-delayed-4';
+                      return <i key={i} className={`fas fa-star ${animatedElements.includes('testimonial') ? delayClass : ''}`} style={{ 
+                        fontSize: '10px'
+                      }}></i>
+                    })}
                   </div>
                   <small style={{ opacity: 0.8 }}>4.9/5 rating</small>
                 </div>
@@ -325,28 +367,7 @@ const Register = () => {
             </div>
           </div>
           
-          <style jsx>{`
-            @keyframes floatStar {
-              0%, 100% { transform: translateY(0px) rotate(0deg); }
-              50% { transform: translateY(-15px) rotate(180deg); }
-            }
-            @keyframes growthPulse {
-              0%, 100% { transform: scale(1); opacity: 0.4; }
-              50% { transform: scale(1.2); opacity: 0.8; }
-            }
-            @keyframes iconPulse {
-              0%, 100% { transform: scale(1); }
-              50% { transform: scale(1.1); }
-            }
-            @keyframes avatarBounce {
-              0%, 100% { transform: translateY(0px); }
-              50% { transform: translateY(-3px); }
-            }
-            @keyframes starTwinkle {
-              0%, 100% { opacity: 1; transform: scale(1); }
-              50% { opacity: 0.7; transform: scale(1.2); }
-            }
-          `}</style>
+
         </div>
       </div>
       

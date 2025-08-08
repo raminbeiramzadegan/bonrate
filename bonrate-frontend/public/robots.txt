@@ -1,3 +1,14 @@
+# Bonrate Pro - Customer Review and Engagement Platform
 # https://www.robotstxt.org/robotstxt.html
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /settings/
+
+# Sitemap location (add when available)
+# Sitemap: https://yourdomain.com/sitemap.xml
