@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { Modal, Button, ProgressBar, Row, Col, Form } from 'react-bootstrap';
 import BusinessProfileSetup from './BusinessProfileSetup';
 
-const SetupWizard = ({ show, onHide }) => {
+interface SetupWizardProps {
+  show: boolean;
+  onHide: () => void;
+}
+
+const SetupWizard = ({ show, onHide }: SetupWizardProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showBusinessSetup, setShowBusinessSetup] = useState(false);
   const [showReviewPlatforms, setShowReviewPlatforms] = useState(false);
@@ -141,9 +146,9 @@ const SetupWizard = ({ show, onHide }) => {
                 className="progress-bar bg-primary" 
                 role="progressbar" 
                 style={{ width: '66%' }} 
-                aria-valuenow="66" 
-                aria-valuemin="0" 
-                aria-valuemax="100"
+                aria-valuenow={66} 
+                aria-valuemin={0} 
+                aria-valuemax={100}
               ></div>
             </div>
           </div>
@@ -254,9 +259,9 @@ const SetupWizard = ({ show, onHide }) => {
                 className="progress-bar bg-primary" 
                 role="progressbar" 
                 style={{ width: '100%' }} 
-                aria-valuenow="100" 
-                aria-valuemin="0" 
-                aria-valuemax="100"
+                aria-valuenow={100} 
+                aria-valuemin={0} 
+                aria-valuemax={100}
               ></div>
             </div>
           </div>

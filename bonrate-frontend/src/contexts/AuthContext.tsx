@@ -1,7 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const AuthContext = createContext();
+interface AuthContextType {
+  user: any;
+  token: string | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (tokenData: any, userData: any) => void;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -11,7 +20,7 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
@@ -21,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
   // Check token expiration
-  const isTokenExpired = (token) => {
+  const isTokenExpired = (token: string) => {
     if (!token) return true;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -98,7 +107,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, lastActivity]);
 
-  const login = (tokenData, userData) => {
+  const login = (tokenData: any, userData: any) => {
     localStorage.setItem('token', tokenData.access_token);
     localStorage.setItem('user', JSON.stringify(userData));
     if (tokenData.refresh_token) {

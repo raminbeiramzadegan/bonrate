@@ -307,6 +307,7 @@ const Settings = () => {
     <Layout 
       title="⚙️ Settings" 
       subtitle="Manage your account settings and preferences"
+      headerActions={null}
     >
       {/* Settings Overview */}
       <div className="platform-overview mb-4">

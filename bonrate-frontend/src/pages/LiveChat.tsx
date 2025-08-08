@@ -35,7 +35,7 @@ const LiveChat = () => {
     }
   ]);
   const [isTyping, setIsTyping] = useState(true);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,7 +59,7 @@ const LiveChat = () => {
     }
   };
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = (action: string) => {
     setMessage(`I need help with: ${action}`);
   };
 
@@ -235,7 +235,7 @@ const LiveChat = () => {
         </Card>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes bounce {
           0%, 80%, 100% { transform: translateY(0); }
           40% { transform: translateY(-10px); }

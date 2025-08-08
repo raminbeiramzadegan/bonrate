@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Row, Col, Card, Button, Modal, Form, Badge, Table } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import '../styles/Campaign.css';
 
 const Templates = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templateData, setTemplateData] = useState({
     name: '',
@@ -14,7 +14,7 @@ const Templates = () => {
     content: 'Hi {customer_name}! 👋\n\nThanks for choosing {business_name}! We\'d love to hear about your experience.\n\nCould you take 30 seconds to leave us a review?\n\n{review_link}\n\n- {business_name} Team'
   });
   
-  const handleTemplateChange = (field, value) => {
+  const handleTemplateChange = (field: string, value: string) => {
     setTemplateData(prev => ({ ...prev, [field]: value }));
   };
   
@@ -27,7 +27,7 @@ const Templates = () => {
     
     let preview = templateData.content;
     Object.keys(sampleData).forEach(key => {
-      preview = preview.replace(new RegExp(`{${key}}`, 'g'), sampleData[key]);
+      preview = preview.replace(new RegExp(`{${key}}`, 'g'), sampleData[key as keyof typeof sampleData]);
     });
     
     return preview.split('\n').map((line, index) => (

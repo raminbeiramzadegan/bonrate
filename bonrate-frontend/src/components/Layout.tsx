@@ -4,7 +4,14 @@ import Sidebar from './Sidebar';
 import '../styles/Dashboard.css';
 import '../styles/Mobile.css';
 
-const Layout = ({ children, title, subtitle, headerActions }) => {
+interface LayoutProps {
+  children: React.ReactNode;
+  title: string;
+  subtitle: string;
+  headerActions?: React.ReactNode;
+}
+
+const Layout = ({ children, title, subtitle, headerActions }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (

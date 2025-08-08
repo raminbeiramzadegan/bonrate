@@ -7,8 +7,8 @@ const CampaignWizard = () => {
     name: '',
     description: '',
     template: '',
-    channels: [],
-    audience: [],
+    channels: [] as string[],
+    audience: [] as number[],
     schedule: {
       startDate: '',
       sendTime: '',
@@ -29,7 +29,7 @@ const CampaignWizard = () => {
     { id: 3, name: 'Repeat Customers', count: 320 }
   ];
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCampaign(prev => ({
       ...prev,
@@ -37,7 +37,7 @@ const CampaignWizard = () => {
     }));
   };
 
-  const handleChannelChange = (e) => {
+  const handleChannelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setCampaign(prev => {
       if (checked) {
@@ -48,14 +48,14 @@ const CampaignWizard = () => {
     });
   };
 
-  const handleAudienceChange = (audienceId) => {
+  const handleAudienceChange = (audienceId: number) => {
     setCampaign(prev => ({
       ...prev,
-      audience: [parseInt(audienceId)]
+      audience: [audienceId]
     }));
   };
 
-  const handleScheduleChange = (e) => {
+  const handleScheduleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCampaign(prev => ({
       ...prev,

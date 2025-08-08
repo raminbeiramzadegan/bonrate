@@ -24,7 +24,7 @@ const DripAutomation = () => {
     { id: 4, name: 'Follow-up SMS', type: 'sms' }
   ];
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setAutomation(prev => ({
       ...prev,
@@ -32,7 +32,7 @@ const DripAutomation = () => {
     }));
   };
 
-  const handleStepChange = (stepId, field, value) => {
+  const handleStepChange = (stepId: number, field: string, value: any) => {
     setAutomation(prev => ({
       ...prev,
       steps: prev.steps.map(step => 
@@ -58,7 +58,7 @@ const DripAutomation = () => {
     }));
   };
 
-  const removeStep = (stepId) => {
+  const removeStep = (stepId: number) => {
     if (automation.steps.length <= 1) return;
     
     setAutomation(prev => ({

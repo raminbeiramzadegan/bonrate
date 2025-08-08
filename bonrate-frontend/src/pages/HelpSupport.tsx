@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 
 const HelpSupport = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedFaq, setExpandedFaq] = useState(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const quickActions = [
     { icon: 'fa-rocket', title: 'Getting Started', desc: 'Learn the basics' },

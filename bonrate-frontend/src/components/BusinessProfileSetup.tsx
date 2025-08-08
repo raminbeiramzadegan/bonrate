@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 
-const BusinessProfileSetup = ({ show, onHide, onNext }) => {
+interface BusinessProfileSetupProps {
+  show: boolean;
+  onHide: () => void;
+  onNext: () => void;
+}
+
+const BusinessProfileSetup = ({ show, onHide, onNext }: BusinessProfileSetupProps) => {
   const [businessData, setBusinessData] = useState({
     name: '',
     website: '',
     industry: '',
-    logo: null,
+    logo: null as File | null,
     googlePlaceId: '',
     yelpBusinessId: '',
     facebookPageId: ''
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setBusinessData(prev => ({
       ...prev,
@@ -20,14 +26,14 @@ const BusinessProfileSetup = ({ show, onHide, onNext }) => {
     }));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBusinessData(prev => ({
       ...prev,
-      logo: e.target.files[0]
+      logo: e.target.files?.[0] || null
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically save the business profile data
     console.log('Business profile data:', businessData);
@@ -59,9 +65,9 @@ const BusinessProfileSetup = ({ show, onHide, onNext }) => {
               className="progress-bar bg-primary" 
               role="progressbar" 
               style={{ width: '33%' }} 
-              aria-valuenow="33" 
-              aria-valuemin="0" 
-              aria-valuemax="100"
+              aria-valuenow={33} 
+              aria-valuemin={0} 
+              aria-valuemax={100}
             ></div>
           </div>
         </div>

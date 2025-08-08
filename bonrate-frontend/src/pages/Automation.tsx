@@ -21,7 +21,7 @@ const Automation = () => {
     conditions: []
   });
   
-  const handleAutomationChange = (field, value) => {
+  const handleAutomationChange = (field: string, value: any) => {
     setAutomationData(prev => ({ ...prev, [field]: value }));
   };
   

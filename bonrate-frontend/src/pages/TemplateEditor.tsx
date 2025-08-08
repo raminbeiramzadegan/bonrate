@@ -14,7 +14,7 @@ const TemplateEditor = () => {
     review_link: 'https://review.bonrate.com/abc123'
   });
 
-  const handleTemplateChange = (e) => {
+  const handleTemplateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setTemplate(prev => ({
       ...prev,
@@ -22,7 +22,7 @@ const TemplateEditor = () => {
     }));
   };
 
-  const handlePreviewDataChange = (e) => {
+  const handlePreviewDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPreviewData(prev => ({
       ...prev,

@@ -13,7 +13,7 @@ const EmailSupport = () => {
     message: ''
   });
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

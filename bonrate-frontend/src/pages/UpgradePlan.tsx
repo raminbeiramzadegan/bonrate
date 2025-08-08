@@ -143,7 +143,7 @@ const UpgradePlan = () => {
                 
                 <div className="mb-4">
                   <span className="fs-1 fw-bold text-primary">
-                    ${plan.price[billingCycle]}
+                    ${plan.price[billingCycle as keyof typeof plan.price]}
                   </span>
                   <span className="text-muted">
                     /{billingCycle === 'monthly' ? 'month' : 'year'}

@@ -27,14 +27,14 @@ const BusinessProfile = () => {
     sunday: { enabled: false, open: '10:00', close: '21:00' }
   });
 
-  const handleBusinessChange = (field, value) => {
+  const handleBusinessChange = (field: string, value: any) => {
     setBusinessData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleHoursChange = (day, field, value) => {
+  const handleHoursChange = (day: string, field: string, value: any) => {
     setBusinessHours(prev => ({
       ...prev,
-      [day]: { ...prev[day], [field]: value }
+      [day]: { ...prev[day as keyof typeof prev], [field]: value }
     }));
   };
 
