@@ -47,40 +47,18 @@ const Contacts = () => {
   const loadContacts = async () => {
     try {
       setLoading(true);
-      // Mock data for now - replace with actual API call
-      const mockContacts: Contact[] = [
-        {
-          id: '1',
-          name: 'John Smith',
-          phone: '+1 (555) 123-4567',
-          email: 'john@example.com',
-          reviewUrl: 'https://bonrate.pro/review/abc123',
-
-          lastContact: 'Mar 15, 2024',
-          reviewStatus: 'pending'
-        },
-        {
-          id: '2',
-          name: 'Sarah Johnson',
-          phone: '+1 (555) 987-6543',
-          email: 'sarah@example.com',
-          reviewUrl: 'https://bonrate.pro/review/def456',
-
-          lastContact: 'Mar 12, 2024',
-          reviewStatus: 'completed'
-        },
-        {
-          id: '3',
-          name: 'Mike Davis',
-          phone: '+1 (555) 456-7890',
-          email: 'mike@example.com',
-          reviewUrl: 'https://bonrate.pro/review/ghi789',
-
-          lastContact: 'Mar 10, 2024',
-          reviewStatus: 'not_sent'
+      const response = await fetch('http://127.0.0.1:8000/api/contacts/', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-      ];
-      setContacts(mockContacts);
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setContacts(data);
+      } else {
+        showNotification('error', 'Failed to load contacts');
+      }
     } catch (error) {
       showNotification('error', 'Failed to load contacts');
     } finally {
@@ -99,34 +77,47 @@ const Contacts = () => {
 
   const handleSaveContact = async () => {
     try {
+      console.log('Saving contact:', contactData);
+      
       if (!contactData.name || !contactData.phone || !contactData.email) {
         showNotification('error', 'Please fill in all required fields');
         return;
       }
 
-      const newContact: Contact = {
-        id: Date.now().toString(),
-        name: contactData.name,
-        phone: contactData.phone,
-        email: contactData.email,
-        reviewUrl: `https://bonrate.pro/review/${Math.random().toString(36).substr(2, 9)}`,
+      const token = localStorage.getItem('token');
+      console.log('Token:', token ? 'Present' : 'Missing');
 
-        createdAt: new Date().toISOString(),
-        reviewStatus: 'not_sent'
-      };
+      const response = await fetch('http://127.0.0.1:8000/api/contacts/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: contactData.name,
+          phone: contactData.phone,
+          email: contactData.email
+        })
+      });
 
-      if (editingContact) {
-        // Update existing contact
-        setContacts(prev => prev.map(c => c.id === editingContact.id ? { ...newContact, id: editingContact.id } : c));
-        showNotification('success', 'Contact updated successfully!');
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (response.ok) {
+        showNotification('success', data.message);
+        loadContacts(); // Reload contacts from server
+        resetModal();
       } else {
-        // Add new contact
-        setContacts(prev => [newContact, ...prev]);
-        showNotification('success', 'Contact added successfully!');
+        // Handle validation errors
+        if (data.details && data.details.email) {
+          showNotification('error', data.details.email[0]);
+        } else {
+          showNotification('error', data.error || 'Failed to save contact');
+        }
       }
-
-      resetModal();
     } catch (error) {
+      console.error('Error saving contact:', error);
       showNotification('error', 'Failed to save contact');
     }
   };
@@ -145,9 +136,26 @@ const Contacts = () => {
   const handleDeleteContact = async (contactId: string) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       try {
-        setContacts(prev => prev.filter(c => c.id !== contactId));
-        showNotification('success', 'Contact deleted successfully!');
+        console.log('Deleting contact:', contactId);
+        
+        const response = await fetch(`http://127.0.0.1:8000/api/contacts/${contactId}/`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        console.log('Delete response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          showNotification('success', data.message);
+          loadContacts(); // Reload contacts from server
+        } else {
+          showNotification('error', 'Failed to delete contact');
+        }
       } catch (error) {
+        console.error('Error deleting contact:', error);
         showNotification('error', 'Failed to delete contact');
       }
     }
