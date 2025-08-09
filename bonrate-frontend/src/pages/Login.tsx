@@ -1,19 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = () => {
-  const [formData, setFormData] = useState({
+interface FormData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+interface Errors {
+  email?: string;
+  password?: string;
+  general?: string;
+}
+
+interface LoginResponse {
+  tokens: {
+    access: string;
+    refresh: string;
+  };
+  user: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    business_name: string;
+  };
+  error?: string;
+}
+
+const Login: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
     rememberMe: false
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errors, setErrors] = useState<Errors>({});
   const { login } = useAuth();
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
@@ -23,12 +49,12 @@ const Login = () => {
     }));
     
     // Clear specific field error when user starts typing correct data
-    if (errors[name]) {
+    if (errors[name as keyof Errors]) {
       const newErrors = { ...errors };
       
-      if (name === 'email' && /\S+@\S+\.\S+/.test(newValue)) {
+      if (name === 'email' && /\S+@\S+\.\S+/.test(newValue as string)) {
         delete newErrors.email;
-      } else if (name === 'password' && newValue.length >= 6) {
+      } else if (name === 'password' && (newValue as string).length >= 6) {
         delete newErrors.password;
       }
       
@@ -36,8 +62,8 @@ const Login = () => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
     
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -55,7 +81,7 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -77,7 +103,7 @@ const Login = () => {
         })
       });
       
-      const data = await response.json();
+      const data: LoginResponse = await response.json();
       
       if (response.ok) {
         const tokenData = {

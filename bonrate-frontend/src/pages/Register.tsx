@@ -1,14 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+}
 
-const Register = () => {
+interface Errors {
+  firstName?: string;
+  lastName?: string;
+  businessName?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  confirmPassword?: string;
+  agreeToTerms?: string;
+  general?: string;
+}
+
+interface RegisterResponse {
+  tokens: {
+    access: string;
+    refresh: string;
+  };
+  user: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    business_name: string;
+  };
+  error?: string;
+}
+
+interface GoogleCredentialResponse {
+  credential: string;
+}
+
+interface DecodedGoogleToken {
+  email?: string;
+  given_name?: string;
+  family_name?: string;
+}
+
+const Register: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     businessName: '',
@@ -18,11 +64,11 @@ const Register = () => {
     confirmPassword: '',
     agreeToTerms: false
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [animatedElements, setAnimatedElements] = useState([]);
-  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [animatedElements, setAnimatedElements] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Errors>({});
   const { login } = useAuth();
 
   useEffect(() => {
@@ -36,7 +82,7 @@ const Register = () => {
     return () => timeouts.forEach(clearTimeout);
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
@@ -46,28 +92,29 @@ const Register = () => {
     }));
     
     // Clear specific field error when user starts typing correct data
-    if (errors[name]) {
+    if (errors[name as keyof Errors]) {
       const newErrors = { ...errors };
       
       // Validate the specific field in real-time
-      if (name === 'firstName' && newValue.trim()) {
+      if (name === 'firstName' && (newValue as string).trim()) {
         delete newErrors.firstName;
-      } else if (name === 'lastName' && newValue.trim()) {
+      } else if (name === 'lastName' && (newValue as string).trim()) {
         delete newErrors.lastName;
-      } else if (name === 'businessName' && newValue.trim()) {
+      } else if (name === 'businessName' && (newValue as string).trim()) {
         delete newErrors.businessName;
-      } else if (name === 'email' && /\S+@\S+\.\S+/.test(newValue)) {
+      } else if (name === 'email' && /\S+@\S+\.\S+/.test(newValue as string)) {
         delete newErrors.email;
-      } else if (name === 'phone' && newValue.trim()) {
+      } else if (name === 'phone' && (newValue as string).trim()) {
         delete newErrors.phone;
       } else if (name === 'password') {
-        if (newValue.length >= 8 && 
-            /(?=.*[a-z])/.test(newValue) && 
-            /(?=.*[A-Z])/.test(newValue) && 
-            /(?=.*\d)/.test(newValue) && 
-            /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(newValue) &&
-            (!formData.firstName || !newValue.toLowerCase().includes(formData.firstName.toLowerCase())) &&
-            (!formData.lastName || !newValue.toLowerCase().includes(formData.lastName.toLowerCase()))) {
+        const passwordValue = newValue as string;
+        if (passwordValue.length >= 8 && 
+            /(?=.*[a-z])/.test(passwordValue) && 
+            /(?=.*[A-Z])/.test(passwordValue) && 
+            /(?=.*\d)/.test(passwordValue) && 
+            /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(passwordValue) &&
+            (!formData.firstName || !passwordValue.toLowerCase().includes(formData.firstName.toLowerCase())) &&
+            (!formData.lastName || !passwordValue.toLowerCase().includes(formData.lastName.toLowerCase()))) {
           delete newErrors.password;
         }
       } else if (name === 'confirmPassword' && newValue === formData.password) {
@@ -80,8 +127,8 @@ const Register = () => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
     
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
@@ -132,7 +179,7 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -159,7 +206,7 @@ const Register = () => {
         })
       });
       
-      const data = await response.json();
+      const data: RegisterResponse = await response.json();
       
       if (response.ok) {
         const tokenData = {
@@ -177,18 +224,19 @@ const Register = () => {
         throw new Error(data.error || 'Registration failed');
       }
     } catch (error) {
-      if (error.message.includes('email')) {
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('email')) {
         setErrors({ email: 'This email is already registered' });
       } else {
-        setErrors({ general: error.message || 'Registration failed. Please try again.' });
+        setErrors({ general: errorMessage || 'Registration failed. Please try again.' });
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSuccess = (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
+  const handleGoogleSuccess = (credentialResponse: GoogleCredentialResponse) => {
+    const decoded = jwtDecode<DecodedGoogleToken>(credentialResponse.credential);
     setFormData(prev => ({
       ...prev,
       email: decoded.email || '',
@@ -196,7 +244,6 @@ const Register = () => {
       lastName: decoded.family_name || ''
     }));
   };
-
 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', background: '#F9FAFB', color: '#111827', minHeight: '100vh' }}>

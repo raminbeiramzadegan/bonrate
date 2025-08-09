@@ -17,7 +17,7 @@ import Dashboard from './pages/Dashboard';
 import Campaign from './pages/Campaign';
 import Templates from './pages/Templates';
 import Automation from './pages/Automation';
-import Contacts from './pages/Contacts';
+import Contacts from './pages/Contacts.tsx';
 import Analytics from './pages/Analytics';
 import BusinessProfile from './pages/BusinessProfile';
 import Billing from './pages/Billing';
@@ -30,8 +30,8 @@ import LiveChat from './pages/LiveChat';
 import TemplateEditor from './pages/TemplateEditor';
 import CampaignWizard from './pages/CampaignWizard';
 import DripAutomation from './pages/DripAutomation';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
 
 function App() {
   return (

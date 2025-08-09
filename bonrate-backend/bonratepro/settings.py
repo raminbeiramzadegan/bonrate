@@ -15,6 +15,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "users.apps.UsersConfig",
+    "contacts.apps.ContactsConfig",
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -166,3 +172,13 @@ AUTH_USER_MODEL = 'users.User'
 # Allow unauthenticated access to registration
 from rest_framework.permissions import AllowAny
 REGISTRATION_PERMISSION_CLASSES = [AllowAny]
+
+# SendGrid Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey'
+EMAIL_HOST_PASSWORD = os.getenv('SENDGRID_API_KEY')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'zafre.bahrami@gmail.com')
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
