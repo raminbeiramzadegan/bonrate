@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Button, Modal, Form, Badge, Table, Alert, Spinner, Toast, ToastContainer } from 'react-bootstrap';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Row, Col, Card, Button, Modal, Form, Table, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import Layout from '../components/Layout';
-// // import { contactsApi } from './api/contacts';
 import '../styles/Campaign.css';
 
 interface Contact {
@@ -11,7 +10,6 @@ interface Contact {
   email: string;
   review_url?: string;
   created_at?: string;
-  last_contact?: string;
   review_status?: 'pending' | 'sent' | 'completed' | 'not_sent';
 }
 
@@ -23,6 +21,8 @@ interface BusinessSearchResult {
   user_ratings_total?: number;
 }
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+
 const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,26 +31,33 @@ const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [businessSearchResults, setBusinessSearchResults] = useState<BusinessSearchResult[]>([]);
   const [searchingBusiness, setSearchingBusiness] = useState(false);
+  const [businessQuery, setBusinessQuery] = useState('');
+  const [businessLocation, setBusinessLocation] = useState('');
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   
   const [contactData, setContactData] = useState({
     name: '',
     phone: '',
-    email: ''
+    email: '',
+    business_name: '',
+    business_place_id: '',
+    business_address: ''
   });
 
-  // Load contacts on component mount
   useEffect(() => {
     loadContacts();
   }, []);
 
+  const getAuthHeaders = () => ({
+    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    'Content-Type': 'application/json'
+  });
+
   const loadContacts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/contacts/', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const response = await fetch(`${API_BASE_URL}/api/contacts/`, {
+        headers: getAuthHeaders()
       });
       
       if (response.ok) {
@@ -68,7 +75,7 @@ const Contacts = () => {
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 5000);
+    setTimeout(() => setNotification(null), 4000);
   };
 
   const handleContactChange = (field: string, value: string) => {
@@ -77,29 +84,44 @@ const Contacts = () => {
 
   const handleSaveContact = async () => {
     try {
+      console.log('=== SAVE CONTACT DEBUG ===');
+      console.log('Contact data:', contactData);
+      console.log('Business being saved:', {
+        name: contactData.business_name,
+        place_id: contactData.business_place_id,
+        address: contactData.business_address
+      });
+      console.log('Expected review URL:', contactData.business_place_id ? 
+        `https://search.google.com/local/writereview?placeid=${contactData.business_place_id}` : 'No place_id');
+      console.log('Editing contact:', editingContact);
+      
       if (!contactData.name || !contactData.phone || !contactData.email) {
         showNotification('error', 'Please fill in all required fields');
         return;
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/contacts/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          name: contactData.name,
-          phone: contactData.phone,
-          email: contactData.email
-        })
+      const isUpdate = !!editingContact;
+      const url = isUpdate 
+        ? `${API_BASE_URL}/api/contacts/${editingContact.id}/`
+        : `${API_BASE_URL}/api/contacts/`;
+      
+      const method = isUpdate ? 'PUT' : 'POST';
+      
+      console.log('Request details:', { isUpdate, url, method });
+
+      const response = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(contactData)
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (response.ok) {
         showNotification('success', data.message);
-        loadContacts(); // Reload contacts from server
+        loadContacts();
         resetModal();
       } else {
         if (data.details && data.details.email) {
@@ -109,6 +131,7 @@ const Contacts = () => {
         }
       }
     } catch (error) {
+      console.error('Save contact error:', error);
       showNotification('error', 'Failed to save contact');
     }
   };
@@ -118,8 +141,10 @@ const Contacts = () => {
     setContactData({
       name: contact.name,
       phone: contact.phone,
-      email: contact.email
-
+      email: contact.email,
+      business_name: contact.business_name || '',
+      business_place_id: contact.business_place_id || '',
+      business_address: contact.business_address || ''
     });
     setShowContactModal(true);
   };
@@ -127,17 +152,15 @@ const Contacts = () => {
   const handleDeleteContact = async (contactId: string) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/contacts/${contactId}/`, {
+        const response = await fetch(`${API_BASE_URL}/api/contacts/${contactId}/`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+          headers: getAuthHeaders()
         });
         
         if (response.ok) {
           const data = await response.json();
           showNotification('success', data.message);
-          loadContacts(); // Reload contacts from server
+          loadContacts();
         } else {
           showNotification('error', 'Failed to delete contact');
         }
@@ -149,18 +172,16 @@ const Contacts = () => {
 
   const handleSendEmail = async (contact: Contact) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/contacts/${contact.id}/`, {
+      const response = await fetch(`${API_BASE_URL}/api/contacts/${contact.id}/`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: getAuthHeaders()
       });
       
       const data = await response.json();
       
       if (response.ok) {
         showNotification('success', data.message);
-        loadContacts(); // Reload to get updated status
+        loadContacts();
       } else {
         showNotification('error', data.error || 'Failed to send email');
       }
@@ -174,7 +195,7 @@ const Contacts = () => {
     showNotification('success', 'Review URL copied to clipboard!');
   };
 
-  const searchBusinesses = async (query: string) => {
+  const searchBusinesses = useCallback(async (query: string, location: string) => {
     if (!query.trim()) {
       setBusinessSearchResults([]);
       return;
@@ -182,36 +203,44 @@ const Contacts = () => {
 
     try {
       setSearchingBusiness(true);
-      // Mock Google Places API search - replace with actual API call
-      const mockResults: BusinessSearchResult[] = [
-        {
-          place_id: 'place1',
-          name: `${query} Restaurant`,
-          formatted_address: '123 Main St, City, State 12345',
-          rating: 4.5,
-          user_ratings_total: 127
-        },
-        {
-          place_id: 'place2',
-          name: `${query} Cafe`,
-          formatted_address: '456 Oak Ave, City, State 12345',
-          rating: 4.2,
-          user_ratings_total: 89
-        }
-      ];
-      setBusinessSearchResults(mockResults);
+      const params = new URLSearchParams({ query });
+      
+      if (location.trim()) {
+        params.append('location', location);
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/api/contacts/search-places/?${params}`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setBusinessSearchResults(data.results || []);
+      } else {
+        setBusinessSearchResults([]);
+      }
     } catch (error) {
-      showNotification('error', 'Failed to search businesses');
+      setBusinessSearchResults([]);
     } finally {
       setSearchingBusiness(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchBusinesses(businessQuery, businessLocation);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [businessQuery, businessLocation, searchBusinesses]);
 
   const resetModal = () => {
     setShowContactModal(false);
     setEditingContact(null);
-    setContactData({ name: '', phone: '', email: '' });
+    setContactData({ name: '', phone: '', email: '', business_name: '', business_place_id: '', business_address: '' });
     setBusinessSearchResults([]);
+    setBusinessQuery('');
+    setBusinessLocation('');
   };
 
   const filteredContacts = contacts.filter(contact =>
@@ -220,43 +249,14 @@ const Contacts = () => {
     contact.phone.includes(searchQuery)
   );
 
-  const getStatusBadgeColor = (status?: string) => {
-    switch (status) {
-      case 'completed': return 'success';
-      case 'sent': case 'pending': return 'warning';
-      case 'not_sent': return 'secondary';
-      default: return 'secondary';
-    }
-  };
-
-  const stats = {
-    totalContacts: contacts.length,
-    activeContacts: contacts.filter(c => c.review_status !== 'not_sent').length,
-    reviewsPending: contacts.filter(c => c.review_status === 'pending' || c.review_status === 'sent').length,
-    reviewsCompleted: contacts.filter(c => c.review_status === 'completed').length
-  };
-
-  const headerActions = (
-    <>
-      <Button variant="outline-primary" className="d-flex align-items-center" size="sm">
-        <i className="fa-solid fa-download me-1 d-none d-sm-inline"></i>
-        <span className="d-none d-sm-inline">Import CSV</span>
-        <i className="fa-solid fa-download d-sm-none"></i>
-      </Button>
-      <Button variant="primary" className="d-flex align-items-center" onClick={() => setShowContactModal(true)} size="sm">
-        <i className="fa-solid fa-plus me-1 d-none d-sm-inline"></i>
-        <span className="d-none d-sm-inline">Add Contact</span>
-        <i className="fa-solid fa-plus d-sm-none"></i>
-      </Button>
-    </>
-  );
-
   if (loading) {
     return (
-      <Layout title="Contact Management" subtitle="Loading contacts..." headerActions={null}>
-        <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
-          <p className="mt-3 text-muted">Loading your contacts...</p>
+      <Layout title="Contacts" subtitle="Loading..." headerActions={null}>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+          <div className="text-center">
+            <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} />
+            <p className="mt-3 text-muted fs-5">Loading your contacts...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -264,539 +264,592 @@ const Contacts = () => {
 
   return (
     <Layout 
-      title="Contact Management" 
-      subtitle="Manage your customer contacts and review requests"
-      headerActions={headerActions}
+      title="Contacts" 
+      subtitle={`Manage your ${contacts.length} contacts`}
+      headerActions={
+        <Button 
+          variant="primary" 
+          onClick={() => setShowContactModal(true)}
+          className="d-flex align-items-center gap-2"
+        >
+          <i className="fas fa-plus"></i>
+          Add Contact
+        </Button>
+      }
     >
-      {/* Notifications */}
       <ToastContainer position="top-end" className="p-3">
         {notification && (
-          <Toast show={!!notification} onClose={() => setNotification(null)} bg={notification.type === 'success' ? 'success' : 'danger'}>
-            <Toast.Body className="text-white">
-              <i className={`fa-solid ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2`}></i>
+          <Toast 
+            show={!!notification} 
+            onClose={() => setNotification(null)} 
+            bg={notification.type === 'success' ? 'success' : 'danger'}
+            delay={4000}
+            autohide
+          >
+            <Toast.Body className="text-white d-flex align-items-center">
+              <i className={`fas ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2`}></i>
               {notification.message}
             </Toast.Body>
           </Toast>
         )}
       </ToastContainer>
 
-      {/* Contact Overview */}
-      <div className="platform-overview mb-4">
-        <div className="overview-card">
-          <div className="d-flex justify-content-between">
-            <div className="flex-grow-1">
-              <h2 className="fs-1 fw-bold mb-3">👥 Contact Hub</h2>
-              <p className="fs-5 mb-4 text-white">Manage your customer database and track review engagement with powerful contact management tools.</p>
-              <Row className="mt-4">
-                <Col md={4} className="mb-3">
-                  <div className="feature-card">
-                    <div className="feature-title">
-                      <i className="fa-solid fa-users-gear text-warning"></i>
-                      <span className="fw-semibold">Smart Organization</span>
-                    </div>
-                    <p className="small text-white-50">Tag and categorize contacts for targeted campaigns</p>
-                  </div>
-                </Col>
-                <Col md={4} className="mb-3">
-                  <div className="feature-card">
-                    <div className="feature-title">
-                      <i className="fa-solid fa-chart-line text-success"></i>
-                      <span className="fw-semibold">Review Tracking</span>
-                    </div>
-                    <p className="small text-white-50">Monitor review request status and completion rates</p>
-                  </div>
-                </Col>
-                <Col md={4} className="mb-3">
-                  <div className="feature-card">
-                    <div className="feature-title">
-                      <i className="fa-solid fa-file-import text-info"></i>
-                      <span className="fw-semibold">Bulk Import</span>
-                    </div>
-                    <p className="small text-white-50">Import contacts from CSV, CRM systems, and more</p>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-            <div className="d-none d-md-block ms-4">
-              <div className="bg-white bg-opacity-25 rounded-circle p-4">
-                <i className="fa-solid fa-address-book fs-1"></i>
+      {/* Hero Section */}
+      <div className="mb-5" style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        borderRadius: '20px',
+        padding: '3rem 2rem',
+        color: 'white',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div className="position-absolute" style={{
+          top: '-50px',
+          right: '-50px',
+          width: '200px',
+          height: '200px',
+          background: 'rgba(255,255,255,0.1)',
+          borderRadius: '50%'
+        }}></div>
+        <div className="position-absolute" style={{
+          bottom: '-30px',
+          left: '-30px',
+          width: '150px',
+          height: '150px',
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '50%'
+        }}></div>
+        
+        <Row className="align-items-center position-relative">
+          <Col lg={8}>
+            <div className="d-flex align-items-center mb-3">
+              <div className="bg-white bg-opacity-20 rounded-circle p-3 me-3" style={{ width: '60px', height: '60px' }}>
+                <i className="fas fa-users fs-3 text-white"></i>
+              </div>
+              <div>
+                <h1 className="mb-1 fw-bold">Contact Management</h1>
+                <p className="mb-0 opacity-90">Manage your customer relationships and boost reviews</p>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="mb-4">
-        <h2 className="fs-5 fw-semibold mb-3">📊 Contact Statistics</h2>
-        <Row className="g-3">
-          <Col lg={3} md={6}>
-            <Card className="stats-card h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-2">
-                  <i className="fa-solid fa-users fs-2 text-primary"></i>
-                </div>
-                <Card.Title className="small text-muted mb-1">Total Contacts</Card.Title>
-                <h2 className="mb-0 text-primary">{stats.totalContacts}</h2>
-                <div className="mt-2">
-                  <Badge bg="success" className="small">Active database</Badge>
-                </div>
-              </Card.Body>
-            </Card>
           </Col>
-          <Col lg={3} md={6}>
-            <Card className="stats-card h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-2">
-                  <i className="fa-solid fa-user-check fs-2 text-success"></i>
-                </div>
-                <Card.Title className="small text-muted mb-1">Active Contacts</Card.Title>
-                <h2 className="mb-0 text-success">{stats.activeContacts}</h2>
-                <div className="mt-2">
-                  <Badge bg="success" className="small">Engaged users</Badge>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col lg={3} md={6}>
-            <Card className="stats-card h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-2">
-                  <i className="fa-solid fa-clock fs-2 text-warning"></i>
-                </div>
-                <Card.Title className="small text-muted mb-1">Reviews Pending</Card.Title>
-                <h2 className="mb-0 text-warning">{stats.reviewsPending}</h2>
-                <div className="mt-2">
-                  <Badge bg="warning" className="small">Awaiting response</Badge>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col lg={3} md={6}>
-            <Card className="stats-card h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-2">
-                  <i className="fa-solid fa-star fs-2 text-info"></i>
-                </div>
-                <Card.Title className="small text-muted mb-1">Reviews Completed</Card.Title>
-                <h2 className="mb-0 text-info">{stats.reviewsCompleted}</h2>
-                <div className="mt-2">
-                  <Badge bg="info" className="small">Success rate</Badge>
-                </div>
-              </Card.Body>
-            </Card>
+          <Col lg={4} className="text-lg-end">
+            <div className="bg-white bg-opacity-20 rounded-4 p-3">
+              <div className="fw-bold fs-2">{contacts.length}</div>
+              <small className="opacity-90">Total Contacts</small>
+            </div>
           </Col>
         </Row>
       </div>
 
-      {/* Search and Filters */}
-      <div className="mb-4">
-        <Card className="border-0 shadow-sm">
-          <Card.Body>
-            <Row className="g-3 align-items-center">
-              <Col md={6}>
-                <div className="position-relative">
-                  <Form.Control 
-                    type="text" 
-                    placeholder="Search contacts by name, email, or phone..." 
-                    className="ps-5 py-3 border-0 bg-light"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ borderRadius: '12px' }}
-                  />
-                  <i className="fa-solid fa-magnifying-glass position-absolute start-0 top-50 translate-middle-y ms-4 text-muted"></i>
-                </div>
-              </Col>
-              <Col md={6}>
-                <div className="d-flex gap-2">
-                  <Button variant="outline-primary" className="flex-fill">
-                    <i className="fa-solid fa-filter me-2"></i>
-                    Filter
-                  </Button>
-                  <Button variant="outline-secondary" className="flex-fill">
-                    <i className="fa-solid fa-sort me-2"></i>
-                    Sort
-                  </Button>
-                  <Button variant="outline-success" className="flex-fill">
-                    <i className="fa-solid fa-download me-2"></i>
-                    Export
-                  </Button>
-                </div>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
-      </div>
+      {/* Search Bar */}
+      <Card className="mb-4 border-0 shadow-lg" style={{ borderRadius: '16px' }}>
+        <Card.Body className="p-4">
+          <div className="position-relative">
+            <Form.Control
+              type="text"
+              placeholder="🔍 Search contacts by name, email, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="ps-5 py-4 border-0 bg-light"
+              style={{ 
+                borderRadius: '12px', 
+                fontSize: '16px',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            />
+            <i className="fas fa-search position-absolute start-0 top-50 translate-middle-y ms-4 text-primary"></i>
+          </div>
+        </Card.Body>
+      </Card>
 
-      {/* Contacts Table */}
-      <div className="mb-4">
-        <Card className="border-0 shadow-sm">
-          <Card.Header className="bg-white border-0 py-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 fw-bold">
-                <i className="fa-solid fa-address-book me-2 text-primary"></i>
-                Your Contacts ({filteredContacts.length})
-              </h5>
-              <div className="d-flex gap-2">
-                <Button variant="outline-primary" size="sm">
-                  <i className="fa-solid fa-envelope me-1"></i>
-                  Bulk Email
-                </Button>
-                <Button variant="outline-danger" size="sm">
-                  <i className="fa-solid fa-trash me-1"></i>
-                  Delete Selected
-                </Button>
-              </div>
+      <Card className="border-0 shadow-lg" style={{ borderRadius: '16px' }}>
+        <Card.Header className="border-0 py-4" style={{
+          background: 'linear-gradient(90deg, #f8f9ff 0%, #e3f2fd 100%)',
+          borderRadius: '16px 16px 0 0'
+        }}>
+          <div className="d-flex justify-content-between align-items-center">
+            <h4 className="mb-0 fw-bold text-dark">
+              <i className="fas fa-address-book me-2 text-primary"></i>
+              Your Contacts ({filteredContacts.length})
+            </h4>
+            <div className="d-flex gap-2">
+              <Button variant="outline-primary" size="sm" className="rounded-pill">
+                <i className="fas fa-download me-1"></i>
+                Export
+              </Button>
+              <Button variant="outline-success" size="sm" className="rounded-pill">
+                <i className="fas fa-file-import me-1"></i>
+                Import
+              </Button>
             </div>
-          </Card.Header>
-          <Card.Body className="p-0">
-            {filteredContacts.length === 0 ? (
-              <div className="text-center py-5">
-                <i className="fa-solid fa-users fs-1 text-muted mb-3"></i>
-                <h5 className="text-muted">No contacts found</h5>
-                <p className="text-muted">Add your first contact to get started with review collection.</p>
-                <Button variant="primary" onClick={() => setShowContactModal(true)}>
-                  <i className="fa-solid fa-plus me-2"></i>
-                  Add First Contact
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <div className="d-none d-lg-block">
-                  <Table responsive hover className="mb-0">
-                    <thead className="bg-light">
-                      <tr>
-                        <th className="border-0 py-3 ps-4">
-                          <Form.Check type="checkbox" />
-                        </th>
-                        <th className="border-0 py-3 fw-semibold">Contact</th>
-                        <th className="border-0 py-3 fw-semibold">Phone</th>
-                        <th className="border-0 py-3 fw-semibold">Email</th>
-                        <th className="border-0 py-3 fw-semibold">Review URL</th>
-                        <th className="border-0 py-3 fw-semibold">Status</th>
-                        <th className="border-0 py-3 fw-semibold text-center">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredContacts.map(contact => (
-                        <tr key={contact.id} className="align-middle">
-                          <td className="ps-4">
-                            <Form.Check type="checkbox" />
-                          </td>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle me-3" style={{width: '3rem', height: '3rem'}}>
-                                <i className="fa-solid fa-user text-primary fs-5"></i>
-                              </div>
-                              <div>
-                                <div className="fw-semibold text-dark">{contact.name}</div>
-                                <div className="small text-muted">Contact</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <div className="fw-medium text-dark">{contact.phone}</div>
-                          </td>
-                          <td>
-                            <div className="fw-medium text-dark">{contact.email}</div>
-                            <div className="small text-muted">{contact.last_contact}</div>
-                          </td>
-                          <td>
-                            {contact.review_url && (
-                              <div className="d-flex align-items-center gap-2">
-                                <Button 
-                                  variant="outline-primary" 
-                                  size="sm"
-                                  onClick={() => copyReviewUrl(contact.review_url!)}
-                                  title="Copy review URL"
-                                >
-                                  <i className="fa-solid fa-copy"></i>
-                                </Button>
-                                <Button 
-                                  variant="outline-success" 
-                                  size="sm"
-                                  onClick={() => window.open(contact.review_url, '_blank')}
-                                  title="Open review URL"
-                                >
-                                  <i className="fa-solid fa-external-link-alt"></i>
-                                </Button>
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <Badge bg={getStatusBadgeColor(contact.review_status)} className="px-3 py-2">
-                              <i className={`fa-solid ${
-                                contact.review_status === 'completed' ? 'fa-check-circle' :
-                                contact.review_status === 'sent' ? 'fa-paper-plane' :
-                                contact.review_status === 'pending' ? 'fa-clock' :
-                                'fa-circle'
-                              } me-1`}></i>
-                              {contact.reviewStatus?.replace('_', ' ').toUpperCase() || 'NOT SENT'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <div className="d-flex justify-content-center gap-1">
-                              <Button 
-                                variant="outline-primary" 
-                                size="sm" 
-                                onClick={() => handleEditContact(contact)}
-                                title="Edit contact"
-                              >
-                                <i className="fa-solid fa-edit"></i>
-                              </Button>
-                              <Button 
-                                variant="outline-success" 
-                                size="sm" 
-                                onClick={() => handleSendEmail(contact)}
-                                title="Send review email"
-                              >
-                                <i className="fa-solid fa-envelope"></i>
-                              </Button>
-                              <Button 
-                                variant="outline-danger" 
-                                size="sm" 
-                                onClick={() => handleDeleteContact(contact.id)}
-                                title="Delete contact"
-                              >
-                                <i className="fa-solid fa-trash"></i>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="d-lg-none p-3">
-                  {filteredContacts.map(contact => (
-                    <Card key={contact.id} className="mb-3 border-0 shadow-sm">
-                      <Card.Body>
-                        <div className="d-flex justify-content-between align-items-start mb-3">
-                          <div className="d-flex align-items-center">
-                            <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle me-3" style={{width: '3rem', height: '3rem'}}>
-                              <i className="fa-solid fa-user text-primary"></i>
-                            </div>
-                            <div>
-                              <h6 className="mb-1 fw-semibold">{contact.name}</h6>
-                              <Badge bg={getStatusBadgeColor(contact.review_status)} className="small">
-                                {contact.reviewStatus?.replace('_', ' ').toUpperCase() || 'NOT SENT'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Form.Check type="checkbox" />
+          </div>
+        </Card.Header>
+        
+        <Card.Body className="p-0">
+          {filteredContacts.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="fas fa-users text-muted" style={{ fontSize: '4rem' }}></i>
+              <h5 className="text-muted mb-3 mt-3">No contacts found</h5>
+              <p className="text-muted mb-4">
+                {searchQuery ? 'Try adjusting your search terms' : 'Add your first contact to get started'}
+              </p>
+              <Button 
+                variant="primary" 
+                onClick={() => setShowContactModal(true)}
+                className="px-4 py-2"
+              >
+                <i className="fas fa-plus me-2"></i>
+                Add First Contact
+              </Button>
+            </div>
+          ) : (
+            <Table className="mb-0" style={{ borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+              <thead>
+                <tr style={{ background: 'transparent' }}>
+                  <th className="border-0 py-3 ps-4 fw-semibold text-muted" style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>CONTACT</th>
+                  <th className="border-0 py-3 fw-semibold text-muted" style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>PHONE</th>
+                  <th className="border-0 py-3 fw-semibold text-muted" style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>EMAIL</th>
+                  <th className="border-0 py-3 fw-semibold text-muted" style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>STATUS</th>
+                  <th className="border-0 py-3 fw-semibold text-muted" style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>REVIEW URL</th>
+                  <th className="border-0 py-3 fw-semibold text-muted text-center" style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredContacts.map((contact) => (
+                  <tr key={contact.id} className="align-middle" style={{
+                    background: 'white',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }} onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                  }} onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}>
+                    <td className="ps-4 py-4" style={{ borderRadius: '12px 0 0 12px' }}>
+                      <div className="d-flex align-items-center">
+                        <div 
+                          className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                          style={{ 
+                            width: '48px', 
+                            height: '48px',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            fontSize: '18px'
+                          }}
+                        >
+                          {contact.name.charAt(0).toUpperCase()}
                         </div>
-                        
-                        <div className="mb-3">
-                          <div className="d-flex align-items-center mb-2">
-                            <i className="fa-solid fa-phone me-2 text-muted"></i>
-                            <span className="fw-medium">{contact.phone}</span>
-                          </div>
-                          <div className="d-flex align-items-center mb-2">
-                            <i className="fa-solid fa-envelope me-2 text-muted"></i>
-                            <span className="fw-medium">{contact.email}</span>
-                          </div>
-                          {contact.review_url && (
-                            <div className="d-flex align-items-center gap-2">
-                              <i className="fa-solid fa-link me-2 text-muted"></i>
-                              <Button 
-                                variant="outline-primary" 
-                                size="sm"
-                                onClick={() => copyReviewUrl(contact.reviewUrl!)}
-                              >
-                                <i className="fa-solid fa-copy me-1"></i>
-                                Copy URL
-                              </Button>
-                              <Button 
-                                variant="outline-success" 
-                                size="sm"
-                                onClick={() => window.open(contact.reviewUrl, '_blank')}
-                              >
-                                <i className="fa-solid fa-external-link-alt me-1"></i>
-                                Open
-                              </Button>
-                            </div>
-                          )}
+                        <div>
+                          <div className="fw-bold text-dark mb-1" style={{ fontSize: '16px' }}>{contact.name}</div>
+                          <small className="text-muted d-flex align-items-center">
+                            <i className="fas fa-calendar-plus me-1" style={{ fontSize: '10px' }}></i>
+                            Added {contact.created_at ? new Date(contact.created_at).toLocaleDateString() : 'Recently'}
+                          </small>
                         </div>
-                        
-
-                        
-                        <div className="d-flex justify-content-between align-items-center pt-3 border-top">
-                          <span className="small text-muted">Last contact: {contact.last_contact}</span>
-                          <div className="d-flex gap-1">
-                            <Button 
-                              variant="outline-primary" 
-                              size="sm" 
-                              onClick={() => handleEditContact(contact)}
-                            >
-                              <i className="fa-solid fa-edit"></i>
-                            </Button>
-                            <Button 
-                              variant="outline-success" 
-                              size="sm" 
-                              onClick={() => handleSendEmail(contact)}
-                            >
-                              <i className="fa-solid fa-envelope"></i>
-                            </Button>
-                            <Button 
-                              variant="outline-danger" 
-                              size="sm" 
-                              onClick={() => handleDeleteContact(contact.id)}
-                            >
-                              <i className="fa-solid fa-trash"></i>
-                            </Button>
-                          </div>
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <div className="d-flex align-items-center">
+                        <i className="fas fa-phone me-2 text-success" style={{ fontSize: '14px' }}></i>
+                        <span className="fw-medium text-dark">{contact.phone}</span>
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <div className="d-flex align-items-center">
+                        <i className="fas fa-envelope me-2 text-primary" style={{ fontSize: '14px' }}></i>
+                        <span className="fw-medium text-dark">{contact.email}</span>
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <span 
+                        className={`badge rounded-pill px-3 py-2 fw-medium`}
+                        style={{
+                          backgroundColor: 
+                            contact.review_status === 'completed' ? '#d4edda' :
+                            contact.review_status === 'sent' ? '#fff3cd' :
+                            contact.review_status === 'pending' ? '#cce5ff' : '#f8f9fa',
+                          color:
+                            contact.review_status === 'completed' ? '#155724' :
+                            contact.review_status === 'sent' ? '#856404' :
+                            contact.review_status === 'pending' ? '#004085' : '#6c757d',
+                          border: '1px solid ' + (
+                            contact.review_status === 'completed' ? '#c3e6cb' :
+                            contact.review_status === 'sent' ? '#ffeaa7' :
+                            contact.review_status === 'pending' ? '#b3d7ff' : '#dee2e6'
+                          )
+                        }}
+                      >
+                        <i className={`fas me-1 ${
+                          contact.review_status === 'completed' ? 'fa-check-circle' :
+                          contact.review_status === 'sent' ? 'fa-paper-plane' :
+                          contact.review_status === 'pending' ? 'fa-clock' : 'fa-circle'
+                        }`} style={{ fontSize: '12px' }}></i>
+                        {contact.review_status === 'not_sent' ? 'Not Sent' :
+                         contact.review_status === 'sent' ? 'Sent' :
+                         contact.review_status === 'pending' ? 'Pending' :
+                         contact.review_status === 'completed' ? 'Completed' : 'Unknown'}
+                      </span>
+                    </td>
+                    <td className="py-4">
+                      {contact.review_url ? (
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="light"
+                            size="sm"
+                            onClick={() => copyReviewUrl(contact.review_url!)}
+                            title="Copy review URL"
+                            className="rounded-pill border-0"
+                            style={{ background: '#e3f2fd', color: '#1976d2' }}
+                          >
+                            <i className="fas fa-copy"></i>
+                          </Button>
+                          <Button
+                            variant="light"
+                            size="sm"
+                            onClick={() => window.open(contact.review_url, '_blank')}
+                            title="Open review URL"
+                            className="rounded-pill border-0"
+                            style={{ background: '#e8f5e8', color: '#2e7d32' }}
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </Button>
                         </div>
-                      </Card.Body>
-                    </Card>
-                  ))}
-                </div>
-              </>
-            )}
-          </Card.Body>
-        </Card>
-      </div>
+                      ) : (
+                        <span className="text-muted small">No URL</span>
+                      )}
+                    </td>
+                    <td className="py-4" style={{ borderRadius: '0 12px 12px 0' }}>
+                      <div className="d-flex justify-content-center gap-1">
+                        <Button
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleEditContact(contact)}
+                          title="Edit contact"
+                          className="rounded-pill border-0"
+                          style={{ background: '#fff3e0', color: '#f57c00' }}
+                        >
+                          <i className="fas fa-edit"></i>
+                        </Button>
+                        <Button
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleSendEmail(contact)}
+                          title="Send review email"
+                          className="rounded-pill border-0"
+                          style={{ background: '#e8f5e8', color: '#2e7d32' }}
+                        >
+                          <i className="fas fa-paper-plane"></i>
+                        </Button>
+                        <Button
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleDeleteContact(contact.id)}
+                          title="Delete contact"
+                          className="rounded-pill border-0"
+                          style={{ background: '#ffebee', color: '#d32f2f' }}
+                        >
+                          <i className="fas fa-trash-alt"></i>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Card.Body>
+      </Card>
 
-      {/* Contact Modal */}
       <Modal 
         show={showContactModal} 
         onHide={resetModal}
         centered
-        size="lg"
+        size="xl"
         className="contact-modal"
-        fullscreen="sm-down"
       >
-        <Modal.Header closeButton className="border-0 pb-0">
-          <Modal.Title className="text-primary">
-            <i className={`fa-solid ${editingContact ? 'fa-user-edit' : 'fa-user-plus'} me-2`}></i>
-            {editingContact ? 'Edit Contact' : 'Add New Contact'}
+        <Modal.Header className="border-0 pb-0" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px 12px 0 0' }}>
+          <Modal.Title className="text-white fw-bold d-flex align-items-center w-100">
+            <div className="bg-white bg-opacity-20 rounded-circle p-2 me-3" style={{ width: '40px', height: '40px' }}>
+              <i className={`fas ${editingContact ? 'fa-user-edit' : 'fa-user-plus'} text-white`} style={{ fontSize: '16px' }}></i>
+            </div>
+            <div>
+              <div style={{ fontSize: '20px' }}>{editingContact ? 'Edit Contact' : 'Add New Contact'}</div>
+              <small className="opacity-90" style={{ fontSize: '14px' }}>Manage your customer information</small>
+            </div>
           </Modal.Title>
+          <Button variant="link" onClick={resetModal} className="text-white p-0 border-0" style={{ fontSize: '24px' }}>
+            <i className="fas fa-times"></i>
+          </Button>
         </Modal.Header>
-        <Modal.Body className="pt-0">
-          <div className="bg-primary bg-opacity-10 p-4 rounded mb-4">
-            <h5 className="text-primary mb-2">
-              <i className="fa-solid fa-info-circle me-2"></i>
-              Contact Information
-            </h5>
-            <p className="small text-muted mb-0">
-              {editingContact ? 'Update contact details and manage review status.' : 'Add a new contact to your database and start collecting reviews.'}
-            </p>
-          </div>
-          
-          {/* Business Search */}
-          <div className="mb-4">
-            <Form.Group>
-              <Form.Label className="fw-semibold">
-                <i className="fa-solid fa-search me-2"></i>
-                Search Business (Google Places)
-              </Form.Label>
-              <div className="position-relative">
-                <Form.Control 
-                  type="text" 
-                  placeholder="Search for business name..." 
-                  onChange={(e) => searchBusinesses(e.target.value)}
-                  className="ps-5"
-                />
-                <i className="fa-solid fa-search position-absolute start-0 top-50 translate-middle-y ms-3 text-muted"></i>
-                {searchingBusiness && (
-                  <Spinner size="sm" className="position-absolute end-0 top-50 translate-middle-y me-3" />
-                )}
+        
+        <Modal.Body className="p-4">
+          <div className="mb-4 p-4 rounded-4" style={{ background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)', border: '1px solid #e1f5fe' }}>
+            <Form.Label className="fw-bold mb-3 d-flex align-items-center" style={{ color: '#1565c0', fontSize: '18px' }}>
+              <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3" style={{ width: '36px', height: '36px' }}>
+                <i className="fas fa-search text-primary" style={{ fontSize: '14px' }}></i>
               </div>
-            </Form.Group>
+              Smart Business Search
+            </Form.Label>
+            <p className="text-muted mb-3" style={{ fontSize: '14px' }}>Find and auto-fill business information using Google Places</p>
             
-            {businessSearchResults.length > 0 && (
-              <div className="mt-2">
-                <div className="small text-muted mb-2">Search Results:</div>
-                {businessSearchResults.map(result => (
-                  <Card key={result.place_id} className="mb-2 cursor-pointer" style={{cursor: 'pointer'}}>
-                    <Card.Body className="py-2">
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                          <div className="fw-medium">{result.name}</div>
-                          <div className="small text-muted">{result.formatted_address}</div>
-                        </div>
-                        <div className="text-end">
-                          {result.rating && (
-                            <div className="small">
-                              <i className="fa-solid fa-star text-warning"></i> {result.rating} ({result.user_ratings_total})
+            {contactData.business_name && (
+              <div className="alert alert-success py-3 mb-3" style={{ fontSize: '14px' }}>
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div className="d-flex align-items-center mb-1">
+                      <i className="fas fa-check-circle me-2 text-success"></i>
+                      <strong>{contactData.business_name}</strong>
+                    </div>
+                    <div className="text-muted d-flex align-items-center" style={{ fontSize: '12px' }}>
+                      <i className="fas fa-map-marker-alt me-2"></i>
+                      {contactData.business_address}
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-close" 
+                    onClick={() => {
+                      setContactData(prev => ({ ...prev, business_name: '', business_place_id: '', business_address: '' }));
+                      setBusinessQuery('');
+                    }}
+                  ></button>
+                </div>
+              </div>
+            )}
+          <div className="mb-4">
+            <Form.Label className="fw-semibold mb-2">
+              <i className="fas fa-search me-2"></i>
+              Search Business (Google Places)
+            </Form.Label>
+            <Row className="g-3">
+              <Col md={6}>
+                <div className="position-relative">
+                  <Form.Control
+                    type="text"
+                    placeholder="Business name (e.g., Pizza Hut)"
+                    value={businessQuery}
+                    onChange={(e) => setBusinessQuery(e.target.value)}
+                    className="py-3 ps-5 border-0 shadow-sm"
+                    style={{ borderRadius: '12px', background: 'white' }}
+                  />
+                  <i className="fas fa-store position-absolute start-0 top-50 translate-middle-y ms-3 text-primary"></i>
+                </div>
+              </Col>
+              <Col md={6}>
+                <div className="position-relative">
+                  <Form.Control
+                    type="text"
+                    placeholder="Location (e.g., New York)"
+                    value={businessLocation}
+                    onChange={(e) => setBusinessLocation(e.target.value)}
+                    className="py-3 ps-5 border-0 shadow-sm"
+                    style={{ borderRadius: '12px', background: 'white' }}
+                  />
+                  <i className="fas fa-map-marker-alt position-absolute start-0 top-50 translate-middle-y ms-3 text-success"></i>
+                  {searchingBusiness && (
+                    <div className="position-absolute end-0 top-50 translate-middle-y me-3">
+                      <Spinner size="sm" style={{ color: '#667eea' }} />
+                    </div>
+                  )}
+                </div>
+              </Col>
+            </Row>
+          </div>
+            
+            {(businessQuery.trim() || businessLocation.trim()) && (
+              <div className="mt-3">
+                {searchingBusiness ? (
+                  <div className="text-center py-3">
+                    <Spinner size="sm" className="me-2" />
+                    <small className="text-muted">Searching businesses...</small>
+                  </div>
+                ) : businessSearchResults.length > 0 ? (
+                  <>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <small className="text-muted">
+                        <i className="fas fa-search me-1"></i>
+                        Found {businessSearchResults.length} locations:
+                      </small>
+                      <small className="text-muted">
+                        <i className="fas fa-info-circle me-1"></i>
+                        Click to select specific location
+                      </small>
+                    </div>
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      {businessSearchResults.map((result, index) => (
+                        <Card 
+                          key={result.place_id} 
+                          className="mb-2 border cursor-pointer"
+                          style={{ 
+                            borderRadius: '8px',
+                            transition: 'all 0.2s ease',
+                            cursor: 'pointer',
+                            borderColor: '#e3f2fd'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f8f9ff';
+                            e.currentTarget.style.borderColor = '#667eea';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'white';
+                            e.currentTarget.style.borderColor = '#e3f2fd';
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            console.log('=== BUSINESS SELECTION DEBUG ===');
+                            console.log('Selected business name:', result.name);
+                            console.log('Selected place_id:', result.place_id);
+                            console.log('Selected address:', result.formatted_address);
+                            console.log('Review URL will be:', `https://search.google.com/local/writereview?placeid=${result.place_id}`);
+                            console.log('================================');
+                            
+                            // Update search box with selected business
+                            setBusinessQuery(result.name);
+                            
+                            // Save business data to contact
+                            setContactData(prev => ({
+                              ...prev,
+                              business_name: result.name,
+                              business_place_id: result.place_id,
+                              business_address: result.formatted_address
+                            }));
+                            
+                            // Clear search results
+                            setBusinessSearchResults([]);
+                            
+                            // Show confirmation
+                            showNotification('success', `Selected: ${result.name}`);
+                          }}
+                        >
+                          <Card.Body className="p-3">
+                            <div className="d-flex justify-content-between align-items-start">
+                              <div className="flex-grow-1">
+                                <div className="d-flex align-items-center mb-1">
+                                  <span className="badge bg-primary bg-opacity-10 text-primary me-2" style={{ fontSize: '10px' }}>
+                                    #{index + 1}
+                                  </span>
+                                  <div className="fw-bold text-dark" style={{ fontSize: '15px' }}>{result.name}</div>
+                                </div>
+                                <div className="text-muted d-flex align-items-center" style={{ fontSize: '13px' }}>
+                                  <i className="fas fa-map-marker-alt me-2 text-success" style={{ fontSize: '12px' }}></i>
+                                  <span>{result.formatted_address}</span>
+                                </div>
+                              </div>
+                              {result.rating && (
+                                <div className="text-end ms-3">
+                                  <div className="d-flex align-items-center bg-warning bg-opacity-10 rounded-pill px-2 py-1">
+                                    <i className="fas fa-star text-warning me-1" style={{ fontSize: '10px' }}></i>
+                                    <span className="fw-bold" style={{ fontSize: '12px' }}>{result.rating}</span>
+                                    <small className="text-muted ms-1" style={{ fontSize: '10px' }}>({result.user_ratings_total})</small>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                ))}
+                          </Card.Body>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                ) : businessQuery.trim() && (
+                  <div className="text-center py-3">
+                    <i className="fas fa-search text-muted mb-2" style={{ fontSize: '2rem' }}></i>
+                    <p className="text-muted mb-0">No businesses found</p>
+                    <small className="text-muted">Try different keywords or location</small>
+                  </div>
+                )}
               </div>
             )}
           </div>
-          
-          <Form>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold">Full Name *</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    placeholder="John Smith" 
-                    value={contactData.name}
-                    onChange={(e) => handleContactChange('name', e.target.value)}
-                    required
-                    className="py-3"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold">Phone Number *</Form.Label>
-                  <Form.Control 
-                    type="tel" 
-                    placeholder="+1 (555) 123-4567" 
-                    value={contactData.phone}
-                    onChange={(e) => handleContactChange('phone', e.target.value)}
-                    required
-                    className="py-3"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold">Email Address *</Form.Label>
-                  <Form.Control 
-                    type="email" 
-                    placeholder="john@example.com" 
-                    value={contactData.email}
-                    onChange={(e) => handleContactChange('email', e.target.value)}
-                    required
-                    className="py-3"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            
 
-          </Form>
-          
-          <div className="d-flex flex-column flex-sm-row justify-content-between mt-4 gap-2">
-            <Button variant="link" className="text-muted order-2 order-sm-1" onClick={resetModal}>
-              Cancel
-            </Button>
-            <div className="d-flex gap-2 order-1 order-sm-2">
-              <Button variant="outline-primary" onClick={handleSaveContact}>
-                <i className="fa-solid fa-plus me-2"></i>
-                {editingContact ? 'Update & Send Review' : 'Add & Send Review'}
-              </Button>
-              <Button variant="primary" onClick={handleSaveContact}>
-                {editingContact ? 'Update Contact' : 'Add Contact'}
-                <i className="fa-solid fa-arrow-right ms-2"></i>
-              </Button>
-            </div>
+          <div className="p-4 rounded-4" style={{ background: '#f8f9ff', border: '1px solid #e3f2fd' }}>
+            <h5 className="fw-bold mb-3 d-flex align-items-center" style={{ color: '#1565c0' }}>
+              <i className="fas fa-user-circle me-2"></i>
+              Contact Information
+            </h5>
+            <Form>
+              <Row className="g-3">
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold mb-2" style={{ color: '#424242' }}>
+                      <i className="fas fa-user me-2 text-primary"></i>
+                      Full Name *
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="John Smith"
+                      value={contactData.name}
+                      onChange={(e) => handleContactChange('name', e.target.value)}
+                      className="py-3 border-0 shadow-sm"
+                      style={{ borderRadius: '12px', fontSize: '16px' }}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold mb-2" style={{ color: '#424242' }}>
+                      <i className="fas fa-phone me-2 text-success"></i>
+                      Phone Number *
+                    </Form.Label>
+                    <Form.Control
+                      type="tel"
+                      placeholder="+1 (555) 123-4567"
+                      value={contactData.phone}
+                      onChange={(e) => handleContactChange('phone', e.target.value)}
+                      className="py-3 border-0 shadow-sm"
+                      style={{ borderRadius: '12px', fontSize: '16px' }}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-semibold mb-2" style={{ color: '#424242' }}>
+                  <i className="fas fa-envelope me-2 text-warning"></i>
+                  Email Address *
+                </Form.Label>
+                <Form.Control
+                  type="email"
+                  placeholder="john@example.com"
+                  value={contactData.email}
+                  onChange={(e) => handleContactChange('email', e.target.value)}
+                  className="py-3 border-0 shadow-sm"
+                  style={{ borderRadius: '12px', fontSize: '16px' }}
+                />
+              </Form.Group>
+            </Form>
           </div>
         </Modal.Body>
+        
+        <Modal.Footer className="border-0 pt-0">
+          <div className="d-flex justify-content-between w-100">
+            <Button 
+              variant="light" 
+              onClick={resetModal}
+              className="px-4 py-2 rounded-pill"
+              style={{ color: '#666', border: '1px solid #ddd' }}
+            >
+              <i className="fas fa-times me-2"></i>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveContact}
+              className="px-4 py-2 rounded-pill border-0 fw-semibold"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white'
+              }}
+            >
+              <i className="fas fa-save me-2"></i>
+              {editingContact ? 'Update Contact' : 'Add Contact'}
+            </Button>
+          </div>
+        </Modal.Footer>
       </Modal>
     </Layout>
   );

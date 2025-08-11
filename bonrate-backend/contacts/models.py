@@ -17,6 +17,10 @@ class Contact(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
     email = models.EmailField()
+    business_name = models.CharField(max_length=200, blank=True, null=True)
+    business_place_id = models.CharField(max_length=200, blank=True, null=True)
+    business_address = models.TextField(blank=True, null=True)
+    google_review_url = models.URLField(blank=True, null=True)
     review_url = models.URLField(blank=True, null=True)
     review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default='not_sent')
     last_contact = models.DateTimeField(auto_now=True)
@@ -33,4 +37,9 @@ class Contact(models.Model):
     def save(self, *args, **kwargs):
         if not self.review_url:
             self.review_url = f"https://bonrate.pro/review/{self.id}"
+        
+        # Generate Google review URL if business_place_id exists
+        if self.business_place_id and not self.google_review_url:
+            self.google_review_url = f"https://search.google.com/local/writereview?placeid={self.business_place_id}"
+        
         super().save(*args, **kwargs)

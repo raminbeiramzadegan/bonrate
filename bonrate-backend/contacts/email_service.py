@@ -7,29 +7,54 @@ def send_review_email(contact, user):
     business_name = getattr(user, 'business_name', None) or 'Our Business'
     subject = f"We'd love your feedback - {business_name}"
     
+    # Use Google review URL if available, otherwise use custom review URL
+    review_link = contact.google_review_url or contact.review_url
+    
     # Email content
-    message = f"""
+    if contact.google_review_url:
+        message = f"""
+Hi {contact.name},
+
+Thank you for choosing {business_name}! We hope you had a great experience.
+
+We'd really appreciate if you could take a moment to leave us a Google review:
+{review_link}
+
+Click the link above to open our Google Maps page where you can leave a review.
+Your feedback helps us improve and helps other customers make informed decisions.
+
+Thank you!
+{business_name} Team
+        """
+    else:
+        message = f"""
 Hi {contact.name},
 
 Thank you for choosing {business_name}! We hope you had a great experience.
 
 We'd really appreciate if you could take a moment to leave us a review:
-{contact.review_url}
+{review_link}
 
 Your feedback helps us improve and helps other customers make informed decisions.
 
 Thank you!
 {business_name} Team
-    """
+        """
     
     try:
         print(f"=== EMAIL SERVICE DEBUG ===")
         print(f"Contact: {contact.name} ({contact.email})")
         print(f"User: {user.email}")
         print(f"Business name: {business_name}")
-        print(f"Review URL: {contact.review_url}")
+        print(f"Google review URL: {contact.google_review_url}")
+        print(f"Custom review URL: {contact.review_url}")
+        print(f"Using review link: {review_link}")
         print(f"From email: {settings.DEFAULT_FROM_EMAIL}")
         print(f"Subject: {subject}")
+        print("\n" + "="*60)
+        print("📧 REVIEW LINK SENT TO USER:")
+        print(review_link)
+        print("="*60 + "\n")
         
         # Send email using Django's send_mail
         send_mail(

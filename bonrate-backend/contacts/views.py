@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from .models import Contact
 from .serializers import ContactSerializer, CreateContactSerializer
 from .email_service import send_review_email, send_bulk_review_emails
+from .google_places import search_places
 
 class ContactListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -39,6 +40,29 @@ class ContactListCreateView(APIView):
 
 class ContactDetailView(APIView):
     permission_classes = [IsAuthenticated]
+    
+    def put(self, request, contact_id):
+        """Update a contact"""
+        print(f"PUT /api/contacts/{contact_id}/ - User: {request.user}")
+        print(f"Request data: {request.data}")
+        
+        contact = get_object_or_404(Contact, id=contact_id, user=request.user)
+        serializer = CreateContactSerializer(contact, data=request.data, partial=True, context={'request': request})
+        
+        if serializer.is_valid():
+            contact = serializer.save()
+            response_serializer = ContactSerializer(contact)
+            print(f"Contact updated: {contact}")
+            return Response({
+                "message": "Contact updated successfully!",
+                "contact": response_serializer.data
+            }, status=status.HTTP_200_OK)
+        
+        print(f"Validation errors: {serializer.errors}")
+        return Response({
+            "error": "Failed to update contact",
+            "details": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, contact_id):
         """Delete a contact"""
@@ -86,4 +110,26 @@ class BulkEmailView(APIView):
         return Response({
             "message": f"Emails sent successfully to {result['success_count']} contacts",
             "details": result
+        }, status=status.HTTP_200_OK)
+
+class GooglePlacesSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Search Google Places API with name + location"""
+        query = request.GET.get('query', '').strip()
+        location = request.GET.get('location', '').strip()
+        
+        if not query:
+            return Response({
+                "error": "Query parameter is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        search_text = f"{query} in {location}" if location else query
+        print(f"Searching Google Places for: {search_text}")
+        
+        results = search_places(query, location)
+        
+        return Response({
+            "results": results
         }, status=status.HTTP_200_OK)
