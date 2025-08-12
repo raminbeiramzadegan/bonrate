@@ -26,7 +26,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "users.apps.UsersConfig",
-    "contacts",
     "contacts.apps.ContactsConfig",
     'rest_framework',
     'rest_framework_simplejwt',
@@ -52,19 +51,6 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://146.190.249.229",
-    "https://146.190.249.229",
-]
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
 ]
 
 # REST Framework Settings
@@ -157,26 +143,21 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+
+
 AUTH_USER_MODEL = 'users.User'
 
 # Allow unauthenticated access to registration
 from rest_framework.permissions import AllowAny
 REGISTRATION_PERMISSION_CLASSES = [AllowAny]
 
+
+
+
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# SendGrid Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = os.getenv('SENDGRID_API_KEY')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'zafre.bahrami@gmail.com')
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
-
-# Google Places API Configuration
-GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY')
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
