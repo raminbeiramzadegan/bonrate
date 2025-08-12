@@ -21,5 +21,5 @@ class CreateContactSerializer(serializers.ModelSerializer):
             queryset = queryset.exclude(id=self.instance.id)
         
         if queryset.exists():
-            raise serializers.ValidationError("Contact with this email already exists.")
+            raise serializers.ValidationError("A contact with this email already exists. Please use a different email or update the existing contact.")
         return value
