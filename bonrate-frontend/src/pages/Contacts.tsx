@@ -8,6 +8,10 @@ interface Contact {
   name: string;
   phone: string;
   email: string;
+  business_name?: string;
+  business_place_id?: string;
+  business_address?: string;
+  google_review_url?: string;
   review_url?: string;
   created_at?: string;
   review_status?: 'pending' | 'sent' | 'completed' | 'not_sent';
@@ -495,7 +499,30 @@ const Contacts = () => {
                       </span>
                     </td>
                     <td className="py-4">
-                      {contact.review_url ? (
+                      {contact.google_review_url ? (
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="light"
+                            size="sm"
+                            onClick={() => copyReviewUrl(contact.google_review_url!)}
+                            title="Copy Google review URL"
+                            className="rounded-pill border-0"
+                            style={{ background: '#e3f2fd', color: '#1976d2' }}
+                          >
+                            <i className="fas fa-copy"></i>
+                          </Button>
+                          <Button
+                            variant="light"
+                            size="sm"
+                            onClick={() => window.open(contact.google_review_url, '_blank')}
+                            title="Open Google review URL"
+                            className="rounded-pill border-0"
+                            style={{ background: '#e8f5e8', color: '#2e7d32' }}
+                          >
+                            <i className="fab fa-google"></i>
+                          </Button>
+                        </div>
+                      ) : contact.review_url ? (
                         <div className="d-flex gap-2">
                           <Button
                             variant="light"
@@ -503,7 +530,7 @@ const Contacts = () => {
                             onClick={() => copyReviewUrl(contact.review_url!)}
                             title="Copy review URL"
                             className="rounded-pill border-0"
-                            style={{ background: '#e3f2fd', color: '#1976d2' }}
+                            style={{ background: '#fff3e0', color: '#f57c00' }}
                           >
                             <i className="fas fa-copy"></i>
                           </Button>
