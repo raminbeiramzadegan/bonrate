@@ -13,7 +13,7 @@ SECRET_KEY = "django-insecure-f$sre#2_w0@vao80cou7dqy8q@drb7hv&(ba-1$g=evd&8p3ns
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = True
-ALLOWED_HOSTS = ['146.190.249.229','localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['146.190.249.229','localhost', '127.0.0.1', '0.0.0.0', '*']
 
 
 # Application definition
@@ -163,6 +163,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@bonrate.com")
+
+# Email Configuration - Use console backend for development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@bonrate.com")
 
 # Email Configuration - Use console backend for development
