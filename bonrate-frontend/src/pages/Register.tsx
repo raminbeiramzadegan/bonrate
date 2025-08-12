@@ -190,7 +190,7 @@ const Register: React.FC = () => {
     setErrors({});
     
     try {
-      const response = await fetch('http://146.190.249.229/api/register/', {
+      const response = await fetch('http://146.190.249.229:8000/api/register/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

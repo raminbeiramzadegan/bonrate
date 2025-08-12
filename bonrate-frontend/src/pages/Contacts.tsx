@@ -25,7 +25,7 @@ interface BusinessSearchResult {
   user_ratings_total?: number;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://146.190.249.229:8000';
 
 const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);

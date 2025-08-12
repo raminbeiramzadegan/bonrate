@@ -92,7 +92,7 @@ const Login: React.FC = () => {
     setErrors({});
     
     try {
-      const response = await fetch('http://146.190.249.229/api/login/', {
+      const response = await fetch('http://146.190.249.229:8000/api/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
