@@ -13,9 +13,24 @@ class ContactListCreateView(APIView):
     
     def get(self, request):
         """Get all contacts for the authenticated user"""
-        contacts = Contact.objects.filter(user=request.user)
-        serializer = ContactSerializer(contacts, many=True)
-        return Response(serializer.data)
+        try:
+            print(f"=== CONTACTS GET DEBUG ===")
+            print(f"User: {request.user}")
+            print(f"User ID: {request.user.id}")
+            print(f"User authenticated: {request.user.is_authenticated}")
+            
+            contacts = Contact.objects.filter(user=request.user)
+            print(f"Found {contacts.count()} contacts")
+            
+            serializer = ContactSerializer(contacts, many=True)
+            print(f"Serialized data: {serializer.data}")
+            
+            return Response(serializer.data)
+        except Exception as e:
+            print(f"ERROR in contacts GET: {str(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
     
     def post(self, request):
         """Create a new contact"""

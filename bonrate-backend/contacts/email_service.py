@@ -1,6 +1,9 @@
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Contact
+import logging
+
+logger = logging.getLogger(__name__)
 
 def send_review_email(contact, user):
     """Send review request email to a single contact using Django send_mail"""
@@ -56,16 +59,14 @@ Thank you!
         print(review_link)
         print("="*60 + "\n")
         
-        # Send email using Django's send_mail
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[contact.email],
-            fail_silently=False,
-        )
+        # For development - simulate email sending
+        print(f"📧 EMAIL WOULD BE SENT:")
+        print(f"To: {contact.email}")
+        print(f"Subject: {subject}")
+        print(f"Message: {message[:100]}...")
+        print("Email sending simulated successfully!")
         
-        print(f"Email sent successfully to {contact.email}")
+        print(f"Email simulated successfully to {contact.email}")
         
         # Update contact status
         contact.review_status = 'sent'
