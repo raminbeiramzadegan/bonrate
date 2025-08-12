@@ -28,6 +28,8 @@ interface LoginResponse {
   error?: string;
 }
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://146.190.249.229:8000';
+
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -92,7 +94,7 @@ const Login: React.FC = () => {
     setErrors({});
     
     try {
-      const response = await fetch('http://localhost:8000/api/login/', {
+      const response = await fetch(`${API_BASE_URL}/api/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
