@@ -4,12 +4,43 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import '../styles/Campaign.css';
 
-const Automation = () => {
+interface Automation {
+  id: number;
+  name: string;
+  type: string;
+  status: string;
+  trigger: string;
+  steps: number;
+  contacts: number;
+  completionRate: string;
+  created: string;
+}
+
+interface AutomationData {
+  name: string;
+  type: string;
+  trigger: string;
+  delay: string;
+  sendTime: string;
+  days: string;
+  template: string;
+  channel: 'sms' | 'email' | 'whatsapp';
+  conditions: string[];
+}
+
+interface Stats {
+  totalAutomations: number;
+  activeAutomations: number;
+  contactsInFlow: number;
+  avgCompletionRate: number;
+}
+
+const Automation: React.FC = () => {
   const navigate = useNavigate();
-  const [showAutomationModal, setShowAutomationModal] = useState(false);
-  const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
-  const [currentWizardStep, setCurrentWizardStep] = useState(1);
-  const [automationData, setAutomationData] = useState({
+  const [showAutomationModal, setShowAutomationModal] = useState<boolean>(false);
+  const [showWorkflowBuilder, setShowWorkflowBuilder] = useState<boolean>(false);
+  const [currentWizardStep, setCurrentWizardStep] = useState<number>(1);
+  const [automationData, setAutomationData] = useState<AutomationData>({
     name: '',
     type: '',
     trigger: '',
@@ -21,24 +52,24 @@ const Automation = () => {
     conditions: []
   });
   
-  const handleAutomationChange = (field, value) => {
+  const handleAutomationChange = (field: keyof AutomationData, value: string | string[]): void => {
     setAutomationData(prev => ({ ...prev, [field]: value }));
   };
   
-  const nextStep = () => {
+  const nextStep = (): void => {
     if (currentWizardStep < 4) {
       setCurrentWizardStep(currentWizardStep + 1);
     }
   };
   
-  const prevStep = () => {
+  const prevStep = (): void => {
     if (currentWizardStep > 1) {
       setCurrentWizardStep(currentWizardStep - 1);
     }
   };
 
   // Mock data
-  const automations = [
+  const automations: Automation[] = [
     {
       id: 1,
       name: 'New Customer Welcome Series',
@@ -74,7 +105,7 @@ const Automation = () => {
     }
   ];
 
-  const stats = {
+  const stats: Stats = {
     totalAutomations: 12,
     activeAutomations: 8,
     contactsInFlow: 3526,
@@ -627,7 +658,7 @@ const Automation = () => {
                       label="SMS" 
                       value="sms"
                       checked={automationData.channel === 'sms'}
-                      onChange={(e) => handleAutomationChange('channel', e.target.value)}
+                      onChange={(e) => handleAutomationChange('channel', e.target.value as 'sms' | 'email' | 'whatsapp')}
                     />
                     <Form.Check 
                       type="radio" 
@@ -635,7 +666,7 @@ const Automation = () => {
                       label="Email" 
                       value="email"
                       checked={automationData.channel === 'email'}
-                      onChange={(e) => handleAutomationChange('channel', e.target.value)}
+                      onChange={(e) => handleAutomationChange('channel', e.target.value as 'sms' | 'email' | 'whatsapp')}
                     />
                     <Form.Check 
                       type="radio" 
@@ -643,7 +674,7 @@ const Automation = () => {
                       label="WhatsApp" 
                       value="whatsapp"
                       checked={automationData.channel === 'whatsapp'}
-                      onChange={(e) => handleAutomationChange('channel', e.target.value)}
+                      onChange={(e) => handleAutomationChange('channel', e.target.value as 'sms' | 'email' | 'whatsapp')}
                     />
                   </div>
                 </Form.Group>

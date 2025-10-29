@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import Layout from '../components/Layout';
 
-const PhoneSupport = () => {
-  const [callStatus, setCallStatus] = useState('ready'); // ready, calling, connected
+type CallStatus = 'ready' | 'calling' | 'connected';
+
+const PhoneSupport: React.FC = () => {
+  const [callStatus, setCallStatus] = useState<CallStatus>('ready');
 
   const headerActions = (
     <div className="d-flex gap-2">

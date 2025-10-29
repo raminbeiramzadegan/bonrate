@@ -1,29 +1,53 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, Button, Form, Badge, Table } from 'react-bootstrap';
+import { Row, Col, Card, Button, Form, Badge } from 'react-bootstrap';
 import Layout from '../components/Layout';
 
-const Settings = () => {
-  const [activeTab, setActiveTab] = useState('account');
-  const [notifications, setNotifications] = useState({
+interface NotificationSettings {
+  emailReviews: boolean;
+  smsAlerts: boolean;
+  weeklyReports: boolean;
+  securityAlerts: boolean;
+}
+
+interface Tab {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface Integration {
+  name: string;
+  status: 'Connected' | 'Disconnected' | 'Available';
+  icon: string;
+  color: 'success' | 'secondary' | 'warning';
+}
+
+const Settings: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('account');
+  const [notifications, setNotifications] = useState<NotificationSettings>({
     emailReviews: true,
     smsAlerts: false,
     weeklyReports: true,
     securityAlerts: true
   });
 
-  const tabs = [
+  const tabs: Tab[] = [
     { id: 'account', label: 'Account Settings', icon: 'fa-user' },
     { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
     { id: 'security', label: 'Security', icon: 'fa-shield-halved' },
     { id: 'integrations', label: 'Integrations', icon: 'fa-plug' }
   ];
 
-  const integrations = [
+  const integrations: Integration[] = [
     { name: 'Google My Business', status: 'Connected', icon: 'fa-google', color: 'success' },
     { name: 'Facebook Reviews', status: 'Connected', icon: 'fa-facebook', color: 'success' },
     { name: 'Yelp Business', status: 'Disconnected', icon: 'fa-yelp', color: 'secondary' },
     { name: 'Zapier', status: 'Available', icon: 'fa-bolt', color: 'warning' }
   ];
+
+  const handleNotificationChange = (key: keyof NotificationSettings, value: boolean) => {
+    setNotifications(prev => ({ ...prev, [key]: value }));
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -109,7 +133,7 @@ const Settings = () => {
                   <Form.Check 
                     type="switch" 
                     checked={notifications.emailReviews}
-                    onChange={(e) => setNotifications({...notifications, emailReviews: e.target.checked})}
+                    onChange={(e) => handleNotificationChange('emailReviews', e.target.checked)}
                   />
                 </div>
                 
@@ -121,7 +145,7 @@ const Settings = () => {
                   <Form.Check 
                     type="switch" 
                     checked={notifications.smsAlerts}
-                    onChange={(e) => setNotifications({...notifications, smsAlerts: e.target.checked})}
+                    onChange={(e) => handleNotificationChange('smsAlerts', e.target.checked)}
                   />
                 </div>
                 
@@ -133,7 +157,7 @@ const Settings = () => {
                   <Form.Check 
                     type="switch" 
                     checked={notifications.weeklyReports}
-                    onChange={(e) => setNotifications({...notifications, weeklyReports: e.target.checked})}
+                    onChange={(e) => handleNotificationChange('weeklyReports', e.target.checked)}
                   />
                 </div>
                 
@@ -145,7 +169,7 @@ const Settings = () => {
                   <Form.Check 
                     type="switch" 
                     checked={notifications.securityAlerts}
-                    onChange={(e) => setNotifications({...notifications, securityAlerts: e.target.checked})}
+                    onChange={(e) => handleNotificationChange('securityAlerts', e.target.checked)}
                   />
                 </div>
               </div>
@@ -199,50 +223,6 @@ const Settings = () => {
                     <p className="text-muted small mb-0">Add an extra layer of security to your account</p>
                   </div>
                   <Button variant="outline-primary" size="sm">Enable 2FA</Button>
-                </div>
-              </Card.Body>
-            </Card>
-
-            <Card className="border-0 shadow-sm">
-              <Card.Header className="bg-secondary text-white border-0">
-                <div className="d-flex align-items-center">
-                  <div className="bg-white bg-opacity-20 rounded-circle p-2 me-3">
-                    <i className="fa-solid fa-clock-rotate-left fs-5 text-white"></i>
-                  </div>
-                  <h5 className="mb-0 text-white fw-bold" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>Recent Activity</h5>
-                </div>
-              </Card.Header>
-              <Card.Body>
-                <div className="mb-3">
-                  <div className="d-flex align-items-center mb-2">
-                    <div className="bg-success bg-opacity-10 rounded-circle p-2 me-3">
-                      <i className="fa-solid fa-sign-in-alt text-success fs-6"></i>
-                    </div>
-                    <div>
-                      <div className="fw-medium">Successful login</div>
-                      <div className="small text-muted">Today at 2:30 PM from Chrome on Windows</div>
-                    </div>
-                  </div>
-                  
-                  <div className="d-flex align-items-center mb-2">
-                    <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-                      <i className="fa-solid fa-edit text-primary fs-6"></i>
-                    </div>
-                    <div>
-                      <div className="fw-medium">Profile updated</div>
-                      <div className="small text-muted">Yesterday at 4:15 PM</div>
-                    </div>
-                  </div>
-                  
-                  <div className="d-flex align-items-center">
-                    <div className="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
-                      <i className="fa-solid fa-key text-warning fs-6"></i>
-                    </div>
-                    <div>
-                      <div className="fw-medium">Password changed</div>
-                      <div className="small text-muted">3 days ago</div>
-                    </div>
-                  </div>
                 </div>
               </Card.Body>
             </Card>
@@ -315,35 +295,6 @@ const Settings = () => {
             <div className="flex-grow-1">
               <h2 className="fs-1 fw-bold mb-3">⚙️ Account Settings</h2>
               <p className="fs-5 mb-4 text-white">Customize your account preferences, security settings, and integrations to optimize your Bonrate Pro experience.</p>
-              <Row className="mt-4">
-                <Col md={4} className="mb-3">
-                  <div className="feature-card">
-                    <div className="feature-title">
-                      <i className="fa-solid fa-user-shield text-primary"></i>
-                      <span className="fw-semibold">Security First</span>
-                    </div>
-                    <p className="small text-white-50">Advanced security features and two-factor authentication</p>
-                  </div>
-                </Col>
-                <Col md={4} className="mb-3">
-                  <div className="feature-card">
-                    <div className="feature-title">
-                      <i className="fa-solid fa-bell text-warning"></i>
-                      <span className="fw-semibold">Smart Notifications</span>
-                    </div>
-                    <p className="small text-white-50">Customizable alerts and notification preferences</p>
-                  </div>
-                </Col>
-                <Col md={4} className="mb-3">
-                  <div className="feature-card">
-                    <div className="feature-title">
-                      <i className="fa-solid fa-plug text-success"></i>
-                      <span className="fw-semibold">Easy Integrations</span>
-                    </div>
-                    <p className="small text-white-50">Connect with your favorite tools and platforms</p>
-                  </div>
-                </Col>
-              </Row>
             </div>
             <div className="d-none d-md-block ms-4">
               <div className="bg-white bg-opacity-25 rounded-circle p-4">

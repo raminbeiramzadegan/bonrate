@@ -4,11 +4,32 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import '../styles/Campaign.css';
 
-const UpgradePlan = () => {
-  const navigate = useNavigate();
-  const [billingCycle, setBillingCycle] = useState('monthly');
+interface Plan {
+  name: string;
+  price: { monthly: number; yearly: number };
+  description: string;
+  features: string[];
+  current: boolean;
+  buttonText: string;
+  buttonVariant: string;
+  popular?: boolean;
+  icon: string;
+}
 
-  const plans = [
+interface ComparisonFeature {
+  name: string;
+  starter: string | boolean;
+  professional: string | boolean;
+  enterprise: string | boolean;
+}
+
+type BillingCycle = 'monthly' | 'yearly';
+
+const UpgradePlan: React.FC = () => {
+  const navigate = useNavigate();
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+
+  const plans: Plan[] = [
     {
       name: 'Starter',
       price: { monthly: 29, yearly: 232 },
@@ -63,7 +84,7 @@ const UpgradePlan = () => {
     }
   ];
 
-  const comparisonFeatures = [
+  const comparisonFeatures: ComparisonFeature[] = [
     { name: 'Monthly Reviews', starter: '1,000', professional: '5,000', enterprise: 'Unlimited' },
     { name: 'SMS/Email Credits', starter: '2,500', professional: '10,000', enterprise: '50,000' },
     { name: 'Team Members', starter: '3', professional: 'Unlimited', enterprise: 'Unlimited' },

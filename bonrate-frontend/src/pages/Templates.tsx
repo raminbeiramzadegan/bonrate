@@ -4,22 +4,49 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import '../styles/Campaign.css';
 
-const Templates = () => {
+interface Template {
+  id: number;
+  name: string;
+  type: string;
+  category: string;
+  usage: number;
+  openRate: string;
+  clickRate: string;
+  reviewRate: string;
+  created: string;
+  status: 'Active' | 'Draft' | 'Archived';
+}
+
+interface TemplateData {
+  name: string;
+  category: string;
+  channel: 'sms' | 'email' | 'whatsapp';
+  content: string;
+}
+
+interface Stats {
+  totalTemplates: number;
+  messagesSent: number;
+  openRate: number;
+  reviewsGenerated: number;
+}
+
+const Templates: React.FC = () => {
   const navigate = useNavigate();
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [templateData, setTemplateData] = useState({
+  const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
+  const [templateData, setTemplateData] = useState<TemplateData>({
     name: '',
     category: '',
     channel: 'sms',
     content: 'Hi {customer_name}! 👋\n\nThanks for choosing {business_name}! We\'d love to hear about your experience.\n\nCould you take 30 seconds to leave us a review?\n\n{review_link}\n\n- {business_name} Team'
   });
   
-  const handleTemplateChange = (field, value) => {
+  const handleTemplateChange = (field: keyof TemplateData, value: string) => {
     setTemplateData(prev => ({ ...prev, [field]: value }));
   };
   
-  const renderLivePreview = () => {
-    const sampleData = {
+  const renderLivePreview = (): JSX.Element[] => {
+    const sampleData: Record<string, string> = {
       customer_name: 'John Smith',
       business_name: 'Bonrate Pro',
       review_link: 'https://bonrate.pro/review/abc123'
@@ -36,7 +63,7 @@ const Templates = () => {
   };
 
   // Mock data
-  const templates = [
+  const templates: Template[] = [
     {
       id: 1,
       name: 'Spring Promo Review Request',
@@ -75,7 +102,7 @@ const Templates = () => {
     }
   ];
 
-  const stats = {
+  const stats: Stats = {
     totalTemplates: 24,
     messagesSent: 8547,
     openRate: 74,
@@ -467,7 +494,7 @@ const Templates = () => {
                       label="SMS" 
                       value="sms"
                       checked={templateData.channel === 'sms'}
-                      onChange={(e) => handleTemplateChange('channel', e.target.value)}
+                      onChange={(e) => handleTemplateChange('channel', e.target.value as 'sms' | 'email' | 'whatsapp')}
                     />
                     <Form.Check 
                       type="radio" 
@@ -475,7 +502,7 @@ const Templates = () => {
                       label="Email" 
                       value="email"
                       checked={templateData.channel === 'email'}
-                      onChange={(e) => handleTemplateChange('channel', e.target.value)}
+                      onChange={(e) => handleTemplateChange('channel', e.target.value as 'sms' | 'email' | 'whatsapp')}
                     />
                     <Form.Check 
                       type="radio" 
@@ -483,7 +510,7 @@ const Templates = () => {
                       label="WhatsApp" 
                       value="whatsapp"
                       checked={templateData.channel === 'whatsapp'}
-                      onChange={(e) => handleTemplateChange('channel', e.target.value)}
+                      onChange={(e) => handleTemplateChange('channel', e.target.value as 'sms' | 'email' | 'whatsapp')}
                     />
                   </div>
                 </Form.Group>

@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
 
-const TemplateEditor = () => {
-  const [template, setTemplate] = useState({
+interface Template {
+  name: string;
+  subject: string;
+  content: string;
+}
+
+interface PreviewData {
+  customer_name: string;
+  business_name: string;
+  review_link: string;
+}
+
+const TemplateEditor: React.FC = () => {
+  const [template, setTemplate] = useState<Template>({
     name: '',
     subject: 'We value your feedback!',
     content: 'Dear {{customer_name}},\n\nThank you for choosing {{business_name}}. We hope you enjoyed our service.\n\nWe would appreciate if you could take a moment to leave us a review.\n\n{{review_link}}\n\nThank you,\n{{business_name}} Team'
   });
   
-  const [previewData, setPreviewData] = useState({
+  const [previewData, setPreviewData] = useState<PreviewData>({
     customer_name: 'John Doe',
     business_name: 'Bonrate Pro',
     review_link: 'https://review.bonrate.com/abc123'
   });
 
-  const handleTemplateChange = (e) => {
+  const handleTemplateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setTemplate(prev => ({
       ...prev,
@@ -22,7 +34,7 @@ const TemplateEditor = () => {
     }));
   };
 
-  const handlePreviewDataChange = (e) => {
+  const handlePreviewDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPreviewData(prev => ({
       ...prev,
@@ -30,7 +42,7 @@ const TemplateEditor = () => {
     }));
   };
 
-  const renderPreview = () => {
+  const renderPreview = (): string => {
     let preview = template.content;
     Object.entries(previewData).forEach(([key, value]) => {
       preview = preview.replace(new RegExp(`{{${key}}}`, 'g'), value);
@@ -38,7 +50,7 @@ const TemplateEditor = () => {
     return preview;
   };
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     // Implement save functionality
     console.log('Saving template:', template);
     alert('Template saved successfully!');
@@ -85,9 +97,7 @@ const TemplateEditor = () => {
                     onChange={handleTemplateChange}
                   />
                   <Form.Text className="text-muted">
-                    Use {'{{'}{previewData.customer_name}{'}}'},
-                    {'{{'}{previewData.business_name}{'}}'},
-                    and {'{{'}{previewData.review_link}{'}}'} as variables.
+                    Use {{customer_name}}, {{business_name}}, and {{review_link}} as variables.
                   </Form.Text>
                 </Form.Group>
                 

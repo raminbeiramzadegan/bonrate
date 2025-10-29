@@ -2,18 +2,36 @@ import React, { useState } from 'react';
 import { Row, Col, Card, Button, Form, Badge } from 'react-bootstrap';
 import Layout from '../components/Layout';
 
-const HelpSupport = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedFaq, setExpandedFaq] = useState(null);
+interface QuickAction {
+  icon: string;
+  title: string;
+  desc: string;
+}
 
-  const quickActions = [
+interface HelpCategory {
+  icon: string;
+  title: string;
+  count: number;
+}
+
+interface FaqItem {
+  icon: string;
+  question: string;
+  answer: string;
+}
+
+const HelpSupport: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+
+  const quickActions: QuickAction[] = [
     { icon: 'fa-rocket', title: 'Getting Started', desc: 'Learn the basics' },
     { icon: 'fa-video', title: 'Video Tutorials', desc: 'Watch and learn' },
     { icon: 'fa-headset', title: 'Live Chat', desc: 'Chat with support' },
     { icon: 'fa-envelope', title: 'Email Support', desc: 'Send us a message' }
   ];
 
-  const helpCategories = [
+  const helpCategories: HelpCategory[] = [
     { icon: 'fa-rocket', title: 'Getting Started', count: 12 },
     { icon: 'fa-envelope', title: 'Campaigns & Templates', count: 18 },
     { icon: 'fa-robot', title: 'Automation', count: 15 },
@@ -22,7 +40,7 @@ const HelpSupport = () => {
     { icon: 'fa-credit-card', title: 'Billing & Plans', count: 6 }
   ];
 
-  const faqItems = [
+  const faqItems: FaqItem[] = [
     {
       icon: 'fa-play-circle',
       question: 'How do I create my first campaign?',
@@ -165,12 +183,12 @@ const HelpSupport = () => {
                 <Card className="h-100 border-0 shadow-lg text-center position-relative overflow-hidden" style={{ cursor: 'pointer', transition: 'transform 0.2s', background: color.bg }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
                   <Card.Body className="p-4 position-relative">
                     <div className="bg-white bg-opacity-50 rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style={{width: '70px', height: '70px'}}>
-                      <i className={`fa-solid fa-${action.icon} fs-3`} style={{ color: color.icon }}></i>
+                      <i className={`fa-solid ${action.icon} fs-3`} style={{ color: color.icon }}></i>
                     </div>
                     <h5 className="mb-2 fw-bold" style={{ color: '#374151' }}>{action.title}</h5>
                     <p className="small mb-3" style={{ color: '#6b7280' }}>{action.desc}</p>
                     <Button className="w-100 fw-semibold border-0 text-white" style={{borderRadius: '25px', background: color.button}}>
-                      <i className={`fa-solid fa-${action.icon} me-2`}></i>Get Help
+                      <i className={`fa-solid ${action.icon} me-2`}></i>Get Help
                     </Button>
                   </Card.Body>
                 </Card>
@@ -203,7 +221,7 @@ const HelpSupport = () => {
                   <Card.Body className="p-4 position-relative">
                     <div className="d-flex align-items-center justify-content-between mb-3">
                       <div className="bg-white bg-opacity-60 rounded-circle p-3 shadow-sm">
-                        <i className={`fa-solid fa-${category.icon} fs-5`} style={{ color: color.icon }}></i>
+                        <i className={`fa-solid ${category.icon} fs-5`} style={{ color: color.icon }}></i>
                       </div>
                       <span className="text-white px-3 py-1 rounded-pill fw-bold shadow-sm" style={{ background: color.badge, fontSize: '0.875rem' }}>{category.count}</span>
                     </div>
@@ -255,7 +273,7 @@ const HelpSupport = () => {
                     >
                       <div className="d-flex align-items-center">
                         <div className="bg-white rounded-circle p-2 me-3 shadow-sm">
-                          <i className={`fa-solid fa-${faq.icon}`} style={{ color: color.icon }}></i>
+                          <i className={`fa-solid ${faq.icon}`} style={{ color: color.icon }}></i>
                         </div>
                         <h6 className="mb-0 fw-semibold" style={{ color: '#374151' }}>{faq.question}</h6>
                       </div>

@@ -1,8 +1,28 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
 
-const DripAutomation = () => {
-  const [automation, setAutomation] = useState({
+interface Template {
+  id: number;
+  name: string;
+  type: 'email' | 'sms';
+}
+
+interface AutomationStep {
+  id: number;
+  type: 'email' | 'sms';
+  template: string;
+  delay: number;
+  condition: 'always' | 'no_response' | 'no_review';
+}
+
+interface Automation {
+  name: string;
+  description: string;
+  steps: AutomationStep[];
+}
+
+const DripAutomation: React.FC = () => {
+  const [automation, setAutomation] = useState<Automation>({
     name: '',
     description: '',
     steps: [
@@ -17,14 +37,14 @@ const DripAutomation = () => {
   });
 
   // Mock data
-  const templates = [
+  const templates: Template[] = [
     { id: 1, name: 'Initial Review Request', type: 'email' },
     { id: 2, name: 'SMS Reminder', type: 'sms' },
     { id: 3, name: 'Thank You Email', type: 'email' },
     { id: 4, name: 'Follow-up SMS', type: 'sms' }
   ];
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
     setAutomation(prev => ({
       ...prev,
@@ -32,7 +52,7 @@ const DripAutomation = () => {
     }));
   };
 
-  const handleStepChange = (stepId, field, value) => {
+  const handleStepChange = (stepId: number, field: keyof AutomationStep, value: string | number): void => {
     setAutomation(prev => ({
       ...prev,
       steps: prev.steps.map(step => 
@@ -41,7 +61,7 @@ const DripAutomation = () => {
     }));
   };
 
-  const addStep = () => {
+  const addStep = (): void => {
     const newStepId = Math.max(...automation.steps.map(s => s.id)) + 1;
     setAutomation(prev => ({
       ...prev,
@@ -58,7 +78,7 @@ const DripAutomation = () => {
     }));
   };
 
-  const removeStep = (stepId) => {
+  const removeStep = (stepId: number): void => {
     if (automation.steps.length <= 1) return;
     
     setAutomation(prev => ({
@@ -67,7 +87,7 @@ const DripAutomation = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     console.log('Saving automation:', automation);
     alert('Automation saved successfully!');
   };
@@ -151,7 +171,7 @@ const DripAutomation = () => {
                               <Form.Label>Channel</Form.Label>
                               <Form.Select
                                 value={step.type}
-                                onChange={(e) => handleStepChange(step.id, 'type', e.target.value)}
+                                onChange={(e) => handleStepChange(step.id, 'type', e.target.value as 'email' | 'sms')}
                               >
                                 <option value="email">Email</option>
                                 <option value="sms">SMS</option>
@@ -201,7 +221,7 @@ const DripAutomation = () => {
                                 <Form.Label>Condition</Form.Label>
                                 <Form.Select
                                   value={step.condition}
-                                  onChange={(e) => handleStepChange(step.id, 'condition', e.target.value)}
+                                  onChange={(e) => handleStepChange(step.id, 'condition', e.target.value as AutomationStep['condition'])}
                                 >
                                   <option value="always">Always send</option>
                                   <option value="no_response">If no response</option>

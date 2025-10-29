@@ -5,12 +5,53 @@ import Layout from '../components/Layout';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/Campaign.css';
 
-const Analytics = () => {
+interface KeyMetrics {
+  totalReviews: number;
+  averageRating: number;
+  responseRate: number;
+  activeCampaigns: number;
+  reviewGrowth: number;
+  ratingChange: number;
+  responseGrowth: number;
+}
+
+interface ReviewTrendData {
+  month: string;
+  reviews: number;
+  rating: number;
+}
+
+interface RatingDistribution {
+  rating: string;
+  count: number;
+  percentage: number;
+}
+
+interface CampaignPerformance {
+  id: number;
+  name: string;
+  type: string;
+  status: string;
+  sent: number;
+  responses: number;
+  rate: number;
+  reviews: number;
+}
+
+interface ReviewSource {
+  platform: string;
+  count: number;
+  percentage: number;
+  color: string;
+  icon: string;
+}
+
+const Analytics: React.FC = () => {
   const navigate = useNavigate();
-  const [dateRange, setDateRange] = useState('30');
+  const [dateRange, setDateRange] = useState<string>('30');
 
   // Mock data
-  const keyMetrics = {
+  const keyMetrics: KeyMetrics = {
     totalReviews: 1234,
     averageRating: 4.8,
     responseRate: 68,
@@ -20,7 +61,7 @@ const Analytics = () => {
     responseGrowth: 5.2
   };
 
-  const reviewTrendsData = [
+  const reviewTrendsData: ReviewTrendData[] = [
     { month: 'Jan', reviews: 65, rating: 4.5 },
     { month: 'Feb', reviews: 89, rating: 4.6 },
     { month: 'Mar', reviews: 134, rating: 4.7 },
@@ -30,7 +71,7 @@ const Analytics = () => {
     { month: 'Jul', reviews: 234, rating: 4.8 }
   ];
 
-  const ratingDistribution = [
+  const ratingDistribution: RatingDistribution[] = [
     { rating: '5 Stars', count: 767, percentage: 62.1 },
     { rating: '4 Stars', count: 345, percentage: 28.0 },
     { rating: '3 Stars', count: 87, percentage: 7.1 },
@@ -38,7 +79,7 @@ const Analytics = () => {
     { rating: '1 Star', count: 12, percentage: 0.9 }
   ];
 
-  const campaignPerformance = [
+  const campaignPerformance: CampaignPerformance[] = [
     {
       id: 1,
       name: 'Holiday Special Follow-up',
@@ -71,7 +112,7 @@ const Analytics = () => {
     }
   ];
 
-  const reviewSources = [
+  const reviewSources: ReviewSource[] = [
     { platform: 'Google Reviews', count: 785, percentage: 63.6, color: '#4285F4', icon: 'fa-brands fa-google' },
     { platform: 'Yelp', count: 234, percentage: 19.0, color: '#FF1A1A', icon: 'fa-brands fa-yelp' },
     { platform: 'Facebook', count: 156, percentage: 12.6, color: '#1877F2', icon: 'fa-brands fa-facebook' },

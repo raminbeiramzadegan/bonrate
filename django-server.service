@@ -1,0 +1,15 @@
+[Unit]
+Description=Django Development Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/bonrate/bonrate-backend
+Environment=PATH=/root/bonrate/bonrate-backend/venv/bin
+ExecStart=/root/bonrate/bonrate-backend/venv/bin/python manage.py runserver 0.0.0.0:8000
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

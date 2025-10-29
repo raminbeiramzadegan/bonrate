@@ -286,7 +286,7 @@ const Login: React.FC = () => {
                     Remember me
                   </label>
                 </div>
-                <span style={{ fontSize: '0.875rem', color: '#1D4ED8', cursor: 'pointer' }}>Forgot password?</span>
+                <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: '#1D4ED8', textDecoration: 'none' }}>Forgot password?</Link>
               </div>
               
               <button

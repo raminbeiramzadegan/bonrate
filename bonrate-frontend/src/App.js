@@ -32,6 +32,7 @@ import CampaignWizard from './pages/CampaignWizard';
 import DripAutomation from './pages/DripAutomation';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
+import ForgotPassword from './pages/ForgotPassword.tsx';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
           <Route path="/drip-automation" element={<ProtectedRoute><DripAutomation /></ProtectedRoute>} />
           <Route path="/login" element={<AuthRedirect><Login /></AuthRedirect>} />
           <Route path="/register" element={<AuthRedirect><Register /></AuthRedirect>} />
+          <Route path="/forgot-password" element={<AuthRedirect><ForgotPassword /></AuthRedirect>} />
           <Route path="/*" element={
             <div className="App d-flex flex-column min-vh-100">
               <Navigation />

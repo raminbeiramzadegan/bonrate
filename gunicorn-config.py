@@ -1,0 +1,15 @@
+bind = "0.0.0.0:8000"
+workers = 2
+worker_class = "sync"
+timeout = 30
+keepalive = 2
+max_requests = 1000
+max_requests_jitter = 100
+daemon = False
+pidfile = "/tmp/gunicorn.pid"
+user = "root"
+group = "root"
+tmp_upload_dir = None
+errorlog = "/var/log/gunicorn/error.log"
+accesslog = "/var/log/gunicorn/access.log"
+loglevel = "info"

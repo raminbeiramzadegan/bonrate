@@ -1,9 +1,35 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card, ProgressBar } from 'react-bootstrap';
 
-const CampaignWizard = () => {
-  const [step, setStep] = useState(1);
-  const [campaign, setCampaign] = useState({
+interface Template {
+  id: number;
+  name: string;
+}
+
+interface Audience {
+  id: number;
+  name: string;
+  count: number;
+}
+
+interface Schedule {
+  startDate: string;
+  sendTime: string;
+  timezone: string;
+}
+
+interface Campaign {
+  name: string;
+  description: string;
+  template: string;
+  channels: string[];
+  audience: number[];
+  schedule: Schedule;
+}
+
+const CampaignWizard: React.FC = () => {
+  const [step, setStep] = useState<number>(1);
+  const [campaign, setCampaign] = useState<Campaign>({
     name: '',
     description: '',
     template: '',
@@ -17,19 +43,19 @@ const CampaignWizard = () => {
   });
 
   // Mock data
-  const templates = [
+  const templates: Template[] = [
     { id: 1, name: 'Standard Review Request' },
     { id: 2, name: 'Follow-up Template' },
     { id: 3, name: 'Thank You Template' }
   ];
 
-  const audiences = [
+  const audiences: Audience[] = [
     { id: 1, name: 'All Customers', count: 1250 },
     { id: 2, name: 'Recent Customers', count: 450 },
     { id: 3, name: 'Repeat Customers', count: 320 }
   ];
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
     setCampaign(prev => ({
       ...prev,
@@ -37,7 +63,7 @@ const CampaignWizard = () => {
     }));
   };
 
-  const handleChannelChange = (e) => {
+  const handleChannelChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { value, checked } = e.target;
     setCampaign(prev => {
       if (checked) {
@@ -48,14 +74,14 @@ const CampaignWizard = () => {
     });
   };
 
-  const handleAudienceChange = (audienceId) => {
+  const handleAudienceChange = (audienceId: string): void => {
     setCampaign(prev => ({
       ...prev,
       audience: [parseInt(audienceId)]
     }));
   };
 
-  const handleScheduleChange = (e) => {
+  const handleScheduleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setCampaign(prev => ({
       ...prev,
@@ -66,15 +92,15 @@ const CampaignWizard = () => {
     }));
   };
 
-  const nextStep = () => {
+  const nextStep = (): void => {
     setStep(prev => Math.min(prev + 1, 4));
   };
 
-  const prevStep = () => {
+  const prevStep = (): void => {
     setStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     console.log('Campaign created:', campaign);
     alert('Campaign created successfully!');
     // Reset form or redirect
@@ -192,7 +218,7 @@ const CampaignWizard = () => {
                   <Card 
                     key={audience.id} 
                     className={`mb-2 ${campaign.audience.includes(audience.id) ? 'border-primary' : ''}`}
-                    onClick={() => handleAudienceChange(audience.id)}
+                    onClick={() => handleAudienceChange(audience.id.toString())}
                     style={{ cursor: 'pointer' }}
                   >
                     <Card.Body>

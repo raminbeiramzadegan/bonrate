@@ -2,9 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import Layout from '../components/Layout';
 
-const LiveChat = () => {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
+interface Message {
+  id: number;
+  sender: 'agent' | 'user';
+  text: string;
+  time: string;
+  avatar: string;
+}
+
+const LiveChat: React.FC = () => {
+  const [message, setMessage] = useState<string>('');
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       sender: 'agent',
@@ -34,10 +42,10 @@ const LiveChat = () => {
       avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg'
     }
   ]);
-  const [isTyping, setIsTyping] = useState(true);
-  const messagesEndRef = useRef(null);
+  const [isTyping, setIsTyping] = useState<boolean>(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -45,9 +53,9 @@ const LiveChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (): void => {
     if (message.trim()) {
-      const newMessage = {
+      const newMessage: Message = {
         id: messages.length + 1,
         sender: 'user',
         text: message,
@@ -59,7 +67,7 @@ const LiveChat = () => {
     }
   };
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = (action: string): void => {
     setMessage(`I need help with: ${action}`);
   };
 

@@ -2,8 +2,26 @@ import React, { useState } from 'react';
 import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import Layout from '../components/Layout';
 
-const EmailSupport = () => {
-  const [formData, setFormData] = useState({
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  category: string;
+  subject: string;
+  message: string;
+}
+
+interface Ticket {
+  id: string;
+  title: string;
+  date: string;
+  status: string;
+  statusColor: 'success' | 'warning' | 'primary';
+}
+
+const EmailSupport: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
     firstName: 'John',
     lastName: 'Smith',
     email: 'john@example.com',
@@ -13,7 +31,7 @@ const EmailSupport = () => {
     message: ''
   });
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof FormData, value: string): void => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -24,7 +42,7 @@ const EmailSupport = () => {
     </Button>
   );
 
-  const tickets = [
+  const tickets: Ticket[] = [
     { id: 'SP-2024-001', title: 'Campaign not sending emails', date: 'Dec 28, 2024', status: 'Resolved', statusColor: 'success' },
     { id: 'SP-2024-002', title: 'Integration with Google Reviews', date: 'Dec 30, 2024', status: 'In Progress', statusColor: 'warning' },
     { id: 'SP-2024-003', title: 'Billing question about upgrade', date: 'Jan 2, 2025', status: 'New', statusColor: 'primary' }
@@ -77,7 +95,7 @@ const EmailSupport = () => {
                 <Form.Label>Priority Level</Form.Label>
                 <Form.Select
                   value={formData.priority}
-                  onChange={(e) => handleInputChange('priority', e.target.value)}
+                  onChange={(e) => handleInputChange('priority', e.target.value as FormData['priority'])}
                 >
                   <option value="low">Low - General inquiry</option>
                   <option value="medium">Medium - Account or feature question</option>

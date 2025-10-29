@@ -4,9 +4,42 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import '../styles/Campaign.css';
 
-const Billing = () => {
+interface CurrentPlan {
+  name: string;
+  price: number;
+  renewDate: string;
+  features: {
+    reviews: number;
+    smsCredits: number;
+    emailCredits: number;
+    teamMembers: string;
+  };
+}
+
+interface Usage {
+  reviewsSent: number;
+  smsUsed: number;
+  emailUsed: number;
+}
+
+interface BillingHistoryItem {
+  date: string;
+  description: string;
+  amount: number;
+  status: string;
+}
+
+interface Plan {
+  name: string;
+  price: number;
+  features: string[];
+  current: boolean;
+  popular?: boolean;
+}
+
+const Billing: React.FC = () => {
   const navigate = useNavigate();
-  const [currentPlan] = useState({
+  const [currentPlan] = useState<CurrentPlan>({
     name: 'Professional Plan',
     price: 49,
     renewDate: 'Jan 15, 2025',
@@ -18,20 +51,20 @@ const Billing = () => {
     }
   });
 
-  const [usage] = useState({
+  const [usage] = useState<Usage>({
     reviewsSent: 2347,
     smsUsed: 1256,
     emailUsed: 3421
   });
 
-  const billingHistory = [
+  const billingHistory: BillingHistoryItem[] = [
     { date: 'Dec 15, 2024', description: 'Professional Plan - Monthly', amount: 49.00, status: 'Paid' },
     { date: 'Nov 15, 2024', description: 'Professional Plan - Monthly', amount: 49.00, status: 'Paid' },
     { date: 'Oct 15, 2024', description: 'Professional Plan - Monthly', amount: 49.00, status: 'Paid' },
     { date: 'Sep 15, 2024', description: 'Starter Plan - Monthly', amount: 29.00, status: 'Paid' }
   ];
 
-  const plans = [
+  const plans: Plan[] = [
     {
       name: 'Starter',
       price: 29,

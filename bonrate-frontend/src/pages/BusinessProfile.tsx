@@ -3,8 +3,29 @@ import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import Layout from '../components/Layout';
 import '../styles/Campaign.css';
 
-const BusinessProfile = () => {
-  const [businessData, setBusinessData] = useState({
+interface BusinessData {
+  name: string;
+  type: string;
+  phone: string;
+  email: string;
+  address: string;
+  description: string;
+  website: string;
+  facebook: string;
+  instagram: string;
+  googleBusiness: string;
+}
+
+interface BusinessHours {
+  enabled: boolean;
+  open: string;
+  close: string;
+}
+
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+const BusinessProfile: React.FC = () => {
+  const [businessData, setBusinessData] = useState<BusinessData>({
     name: 'Bella Vista Restaurant',
     type: 'Restaurant',
     phone: '+1 (555) 123-4567',
@@ -17,7 +38,7 @@ const BusinessProfile = () => {
     googleBusiness: ''
   });
 
-  const [businessHours, setBusinessHours] = useState({
+  const [businessHours, setBusinessHours] = useState<Record<DayOfWeek, BusinessHours>>({
     monday: { enabled: true, open: '09:00', close: '22:00' },
     tuesday: { enabled: true, open: '09:00', close: '22:00' },
     wednesday: { enabled: true, open: '09:00', close: '22:00' },
@@ -27,11 +48,11 @@ const BusinessProfile = () => {
     sunday: { enabled: false, open: '10:00', close: '21:00' }
   });
 
-  const handleBusinessChange = (field, value) => {
+  const handleBusinessChange = (field: keyof BusinessData, value: string): void => {
     setBusinessData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleHoursChange = (day, field, value) => {
+  const handleHoursChange = (day: DayOfWeek, field: keyof BusinessHours, value: string | boolean): void => {
     setBusinessHours(prev => ({
       ...prev,
       [day]: { ...prev[day], [field]: value }
@@ -146,7 +167,7 @@ const BusinessProfile = () => {
                 <Form.Check
                   type="checkbox"
                   checked={hours.enabled}
-                  onChange={(e) => handleHoursChange(day, 'enabled', e.target.checked)}
+                  onChange={(e) => handleHoursChange(day as DayOfWeek, 'enabled', e.target.checked)}
                   label={day.charAt(0).toUpperCase() + day.slice(1)}
                 />
               </Col>
@@ -157,7 +178,7 @@ const BusinessProfile = () => {
                       type="time"
                       value={hours.open}
                       disabled={!hours.enabled}
-                      onChange={(e) => handleHoursChange(day, 'open', e.target.value)}
+                      onChange={(e) => handleHoursChange(day as DayOfWeek, 'open', e.target.value)}
                       size="sm"
                     />
                   </Col>
@@ -169,7 +190,7 @@ const BusinessProfile = () => {
                       type="time"
                       value={hours.close}
                       disabled={!hours.enabled}
-                      onChange={(e) => handleHoursChange(day, 'close', e.target.value)}
+                      onChange={(e) => handleHoursChange(day as DayOfWeek, 'close', e.target.value)}
                       size="sm"
                     />
                   </Col>
