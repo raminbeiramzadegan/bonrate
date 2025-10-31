@@ -27,6 +27,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    
+    # Business profile fields
+    business_type = models.CharField(max_length=50, default='Restaurant')
+    address = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    website = models.URLField(blank=True)
+    facebook = models.URLField(blank=True)
+    instagram = models.URLField(blank=True)
+    google_business = models.URLField(blank=True)
+    business_hours = models.TextField(blank=True)  # JSON string
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

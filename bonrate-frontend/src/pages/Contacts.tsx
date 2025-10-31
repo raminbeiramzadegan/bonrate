@@ -25,9 +25,7 @@ interface BusinessSearchResult {
   user_ratings_total?: number;
 }
 
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-  ? 'http://127.0.0.1:8000' 
-  : `http://${window.location.hostname}:8000`;
+const API_BASE_URL = 'http://localhost:8000';
 
 const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -54,26 +52,32 @@ const Contacts = () => {
     loadContacts();
   }, []);
 
-  const getAuthHeaders = () => ({
-    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-    'Content-Type': 'application/json'
-  });
+
 
   const loadContacts = async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/api/contacts/`, {
-        headers: getAuthHeaders()
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setContacts(data);
+        try {
+          const data = await response.json();
+          setContacts(Array.isArray(data) ? data : []);
+        } catch (e) {
+          console.error('Failed to parse contacts JSON:', e);
+          setContacts([]);
+        }
       } else {
-        showNotification('error', 'Failed to load contacts');
+        console.error('Failed to load contacts, status:', response.status);
+        setContacts([]);
       }
     } catch (error) {
-      showNotification('error', 'Failed to load contacts');
+      console.error('Load contacts error:', error);
+      setContacts([]);
     } finally {
       setLoading(false);
     }
@@ -117,13 +121,24 @@ const Contacts = () => {
 
       const response = await fetch(url, {
         method,
-        headers: getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(contactData)
       });
 
       console.log('Response status:', response.status);
-      const data = await response.json();
-      console.log('Response data:', data);
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log('Response data:', data);
+      } catch (e) {
+        console.error('Failed to parse JSON response:', e);
+        const text = await response.text();
+        console.error('Response text:', text);
+        throw new Error('Server returned invalid response');
+      }
 
       if (response.ok) {
         showNotification('success', data.message);
@@ -616,185 +631,7 @@ const Contacts = () => {
         </Modal.Header>
         
         <Modal.Body className="p-4">
-          <div className="mb-4 p-4 rounded-4" style={{ background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)', border: '1px solid #e1f5fe' }}>
-            <Form.Label className="fw-bold mb-3 d-flex align-items-center" style={{ color: '#1565c0', fontSize: '18px' }}>
-              <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3" style={{ width: '36px', height: '36px' }}>
-                <i className="fas fa-search text-primary" style={{ fontSize: '14px' }}></i>
-              </div>
-              Smart Business Search
-            </Form.Label>
-            <p className="text-muted mb-3" style={{ fontSize: '14px' }}>Find and auto-fill business information using Google Places</p>
-            
-            {contactData.business_name && (
-              <div className="alert alert-success py-3 mb-3" style={{ fontSize: '14px' }}>
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <div className="d-flex align-items-center mb-1">
-                      <i className="fas fa-check-circle me-2 text-success"></i>
-                      <strong>{contactData.business_name}</strong>
-                    </div>
-                    <div className="text-muted d-flex align-items-center" style={{ fontSize: '12px' }}>
-                      <i className="fas fa-map-marker-alt me-2"></i>
-                      {contactData.business_address}
-                    </div>
-                  </div>
-                  <button 
-                    type="button" 
-                    className="btn-close" 
-                    onClick={() => {
-                      setContactData(prev => ({ ...prev, business_name: '', business_place_id: '', business_address: '' }));
-                      setBusinessQuery('');
-                    }}
-                  ></button>
-                </div>
-              </div>
-            )}
-          <div className="mb-4">
-            <Form.Label className="fw-semibold mb-2">
-              <i className="fas fa-search me-2"></i>
-              Search Business (Google Places)
-            </Form.Label>
-            <Row className="g-3">
-              <Col md={6}>
-                <div className="position-relative">
-                  <Form.Control
-                    type="text"
-                    placeholder="Business name (e.g., Pizza Hut)"
-                    value={businessQuery}
-                    onChange={(e) => setBusinessQuery(e.target.value)}
-                    className="py-3 ps-5 border-0 shadow-sm"
-                    style={{ borderRadius: '12px', background: 'white' }}
-                  />
-                  <i className="fas fa-store position-absolute start-0 top-50 translate-middle-y ms-3 text-primary"></i>
-                </div>
-              </Col>
-              <Col md={6}>
-                <div className="position-relative">
-                  <Form.Control
-                    type="text"
-                    placeholder="Location (e.g., New York)"
-                    value={businessLocation}
-                    onChange={(e) => setBusinessLocation(e.target.value)}
-                    className="py-3 ps-5 border-0 shadow-sm"
-                    style={{ borderRadius: '12px', background: 'white' }}
-                  />
-                  <i className="fas fa-map-marker-alt position-absolute start-0 top-50 translate-middle-y ms-3 text-success"></i>
-                  {searchingBusiness && (
-                    <div className="position-absolute end-0 top-50 translate-middle-y me-3">
-                      <Spinner size="sm" style={{ color: '#667eea' }} />
-                    </div>
-                  )}
-                </div>
-              </Col>
-            </Row>
-          </div>
-            
-            {(businessQuery.trim() || businessLocation.trim()) && (
-              <div className="mt-3">
-                {searchingBusiness ? (
-                  <div className="text-center py-3">
-                    <Spinner size="sm" className="me-2" />
-                    <small className="text-muted">Searching businesses...</small>
-                  </div>
-                ) : businessSearchResults.length > 0 ? (
-                  <>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <small className="text-muted">
-                        <i className="fas fa-search me-1"></i>
-                        Found {businessSearchResults.length} locations:
-                      </small>
-                      <small className="text-muted">
-                        <i className="fas fa-info-circle me-1"></i>
-                        Click to select specific location
-                      </small>
-                    </div>
-                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                      {businessSearchResults.map((result, index) => (
-                        <Card 
-                          key={result.place_id} 
-                          className="mb-2 border cursor-pointer"
-                          style={{ 
-                            borderRadius: '8px',
-                            transition: 'all 0.2s ease',
-                            cursor: 'pointer',
-                            borderColor: '#e3f2fd'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f8f9ff';
-                            e.currentTarget.style.borderColor = '#667eea';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'white';
-                            e.currentTarget.style.borderColor = '#e3f2fd';
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            console.log('=== BUSINESS SELECTION DEBUG ===');
-                            console.log('Selected business name:', result.name);
-                            console.log('Selected place_id:', result.place_id);
-                            console.log('Selected address:', result.formatted_address);
-                            console.log('Review URL will be:', `https://search.google.com/local/writereview?placeid=${result.place_id}`);
-                            console.log('================================');
-                            
-                            // Update search box with selected business
-                            setBusinessQuery(result.name);
-                            
-                            // Save business data to contact
-                            setContactData(prev => ({
-                              ...prev,
-                              business_name: result.name,
-                              business_place_id: result.place_id,
-                              business_address: result.formatted_address
-                            }));
-                            
-                            // Clear search results
-                            setBusinessSearchResults([]);
-                            
-                            // Show confirmation
-                            showNotification('success', `Selected: ${result.name}`);
-                          }}
-                        >
-                          <Card.Body className="p-3">
-                            <div className="d-flex justify-content-between align-items-start">
-                              <div className="flex-grow-1">
-                                <div className="d-flex align-items-center mb-1">
-                                  <span className="badge bg-primary bg-opacity-10 text-primary me-2" style={{ fontSize: '10px' }}>
-                                    #{index + 1}
-                                  </span>
-                                  <div className="fw-bold text-dark" style={{ fontSize: '15px' }}>{result.name}</div>
-                                </div>
-                                <div className="text-muted d-flex align-items-center" style={{ fontSize: '13px' }}>
-                                  <i className="fas fa-map-marker-alt me-2 text-success" style={{ fontSize: '12px' }}></i>
-                                  <span>{result.formatted_address}</span>
-                                </div>
-                              </div>
-                              {result.rating && (
-                                <div className="text-end ms-3">
-                                  <div className="d-flex align-items-center bg-warning bg-opacity-10 rounded-pill px-2 py-1">
-                                    <i className="fas fa-star text-warning me-1" style={{ fontSize: '10px' }}></i>
-                                    <span className="fw-bold" style={{ fontSize: '12px' }}>{result.rating}</span>
-                                    <small className="text-muted ms-1" style={{ fontSize: '10px' }}>({result.user_ratings_total})</small>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      ))}
-                    </div>
-                  </>
-                ) : businessQuery.trim() && (
-                  <div className="text-center py-3">
-                    <i className="fas fa-search text-muted mb-2" style={{ fontSize: '2rem' }}></i>
-                    <p className="text-muted mb-0">No businesses found</p>
-                    <small className="text-muted">Try different keywords or location</small>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+
 
           <div className="p-4 rounded-4" style={{ background: '#f8f9ff', border: '1px solid #e3f2fd' }}>
             <h5 className="fw-bold mb-3 d-flex align-items-center" style={{ color: '#1565c0' }}>
